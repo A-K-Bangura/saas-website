@@ -220,6 +220,15 @@ import leftArrow from "./assets/cursor_icons/left-arrow.png"; */
     line-height: 1.4;
     letter-spacing: 0.5%;
   }
+  /* Hide scrollbar but keep scroll functionality */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
 
   /* Added smooth animations for reduced motion users */
   @media (prefers-reduced-motion: reduce) {

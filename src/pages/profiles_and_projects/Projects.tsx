@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 // import { Button } from "@/components/ui/button";
 // import { Input } from "@/components/ui/input";
 // import { Badge } from "@/components/ui/badge";
@@ -17,6 +18,14 @@ import { Card, CardContent } from "@/src/components/ui/Card";
 import { Button } from "@/src/components/ui/Button";
 import { Input } from "@/src/components/ui/Input";
 import { Badge } from "@/src/components/ui/Badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/src/components/ui/Select";
+import { Link } from "react-router-dom";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -164,13 +173,28 @@ const years = ["All", "2023", "2022", "2021"];
 const ratings = ["All", "4.5+", "4.0+", "3.5+"];
 
 export default function ProjectsPage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedType, setSelectedType] = useState("All");
-  const [selectedLocation, setSelectedLocation] = useState("All");
-  const [selectedYear, setSelectedYear] = useState("All");
-  const [selectedRating, setSelectedRating] = useState("All");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Get values from URL search params with defaults
+  const searchTerm = searchParams.get("search") || "";
+  const selectedType = searchParams.get("type") || "All";
+  const selectedLocation = searchParams.get("location") || "All";
+  const selectedYear = searchParams.get("year") || "All";
+  const selectedRating = searchParams.get("rating") || "All";
+
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [filteredProjects, setFilteredProjects] = useState(projects);
+
+  // Helper function to update URL search params
+  const updateSearchParams = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === "All" || value === "") {
+      params.delete(key);
+    } else {
+      params.set(key, value);
+    }
+    setSearchParams(params);
+  };
 
   const cardsRef = useRef<HTMLDivElement>(null);
   const filtersRef = useRef<HTMLDivElement>(null);
@@ -245,11 +269,7 @@ export default function ProjectsPage() {
   ]);
 
   const clearFilters = () => {
-    setSearchTerm("");
-    setSelectedType("All");
-    setSelectedLocation("All");
-    setSelectedYear("All");
-    setSelectedRating("All");
+    setSearchParams({});
   };
 
   const hasActiveFilters =
@@ -321,24 +341,23 @@ export default function ProjectsPage() {
                     <label className="text-sm font-medium mb-2 block">
                       Project Type
                     </label>
-                    <div className="space-y-2">
-                      {projectTypes.map((type) => (
-                        <label
-                          key={type}
-                          className="flex items-center space-x-2 cursor-pointer"
-                        >
-                          <input
-                            type="radio"
-                            name="type"
-                            value={type}
-                            checked={selectedType === type}
-                            onChange={(e) => setSelectedType(e.target.value)}
-                            className="text-accent focus:ring-accent"
-                          />
-                          <span className="text-sm">{type}</span>
-                        </label>
-                      ))}
-                    </div>
+                    <Select
+                      value={selectedType}
+                      onValueChange={(value) =>
+                        updateSearchParams("type", value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="All" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {projectTypes.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Location */}
@@ -346,26 +365,23 @@ export default function ProjectsPage() {
                     <label className="text-sm font-medium mb-2 block">
                       Location
                     </label>
-                    <div className="space-y-2">
-                      {locations.map((location) => (
-                        <label
-                          key={location}
-                          className="flex items-center space-x-2 cursor-pointer"
-                        >
-                          <input
-                            type="radio"
-                            name="location"
-                            value={location}
-                            checked={selectedLocation === location}
-                            onChange={(e) =>
-                              setSelectedLocation(e.target.value)
-                            }
-                            className="text-accent focus:ring-accent"
-                          />
-                          <span className="text-sm">{location}</span>
-                        </label>
-                      ))}
-                    </div>
+                    <Select
+                      value={selectedLocation}
+                      onValueChange={(value) =>
+                        updateSearchParams("location", value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="All" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locations.map((location) => (
+                          <SelectItem key={location} value={location}>
+                            {location}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Year */}
@@ -373,24 +389,23 @@ export default function ProjectsPage() {
                     <label className="text-sm font-medium mb-2 block">
                       Year
                     </label>
-                    <div className="space-y-2">
-                      {years.map((year) => (
-                        <label
-                          key={year}
-                          className="flex items-center space-x-2 cursor-pointer"
-                        >
-                          <input
-                            type="radio"
-                            name="year"
-                            value={year}
-                            checked={selectedYear === year}
-                            onChange={(e) => setSelectedYear(e.target.value)}
-                            className="text-accent focus:ring-accent"
-                          />
-                          <span className="text-sm">{year}</span>
-                        </label>
-                      ))}
-                    </div>
+                    <Select
+                      value={selectedYear}
+                      onValueChange={(value) =>
+                        updateSearchParams("year", value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="All" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {years.map((year) => (
+                          <SelectItem key={year} value={year}>
+                            {year}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Rating */}
@@ -398,24 +413,23 @@ export default function ProjectsPage() {
                     <label className="text-sm font-medium mb-2 block">
                       Rating
                     </label>
-                    <div className="space-y-2">
-                      {ratings.map((rating) => (
-                        <label
-                          key={rating}
-                          className="flex items-center space-x-2 cursor-pointer"
-                        >
-                          <input
-                            type="radio"
-                            name="rating"
-                            value={rating}
-                            checked={selectedRating === rating}
-                            onChange={(e) => setSelectedRating(e.target.value)}
-                            className="text-accent focus:ring-accent"
-                          />
-                          <span className="text-sm">{rating}</span>
-                        </label>
-                      ))}
-                    </div>
+                    <Select
+                      value={selectedRating}
+                      onValueChange={(value) =>
+                        updateSearchParams("rating", value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="All" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ratings.map((rating) => (
+                          <SelectItem key={rating} value={rating}>
+                            {rating}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </Card>
@@ -434,7 +448,7 @@ export default function ProjectsPage() {
                 <Input
                   placeholder="Search projects..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => updateSearchParams("search", e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -479,68 +493,92 @@ export default function ProjectsPage() {
                         <label className="text-sm font-medium mb-2 block">
                           Type
                         </label>
-                        <select
+                        <Select
                           value={selectedType}
-                          onChange={(e) => setSelectedType(e.target.value)}
-                          className="w-full p-2 border rounded-md"
+                          onValueChange={(value) =>
+                            updateSearchParams("type", value)
+                          }
                         >
-                          {projectTypes.map((type) => (
-                            <option key={type} value={type}>
-                              {type}
-                            </option>
-                          ))}
-                        </select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="All" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {projectTypes.map((type) => (
+                              <SelectItem key={type} value={type}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div>
                         <label className="text-sm font-medium mb-2 block">
                           Location
                         </label>
-                        <select
+                        <Select
                           value={selectedLocation}
-                          onChange={(e) => setSelectedLocation(e.target.value)}
-                          className="w-full p-2 border rounded-md"
+                          onValueChange={(value) =>
+                            updateSearchParams("location", value)
+                          }
                         >
-                          {locations.map((location) => (
-                            <option key={location} value={location}>
-                              {location}
-                            </option>
-                          ))}
-                        </select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="All" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {locations.map((location) => (
+                              <SelectItem key={location} value={location}>
+                                {location}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div>
                         <label className="text-sm font-medium mb-2 block">
                           Year
                         </label>
-                        <select
+                        <Select
                           value={selectedYear}
-                          onChange={(e) => setSelectedYear(e.target.value)}
-                          className="w-full p-2 border rounded-md"
+                          onValueChange={(value) =>
+                            updateSearchParams("year", value)
+                          }
                         >
-                          {years.map((year) => (
-                            <option key={year} value={year}>
-                              {year}
-                            </option>
-                          ))}
-                        </select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="All" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {years.map((year) => (
+                              <SelectItem key={year} value={year}>
+                                {year}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div>
                         <label className="text-sm font-medium mb-2 block">
                           Rating
                         </label>
-                        <select
+                        <Select
                           value={selectedRating}
-                          onChange={(e) => setSelectedRating(e.target.value)}
-                          className="w-full p-2 border rounded-md"
+                          onValueChange={(value) =>
+                            updateSearchParams("rating", value)
+                          }
                         >
-                          {ratings.map((rating) => (
-                            <option key={rating} value={rating}>
-                              {rating}
-                            </option>
-                          ))}
-                        </select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="All" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ratings.map((rating) => (
+                              <SelectItem key={rating} value={rating}>
+                                {rating}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
@@ -560,7 +598,9 @@ export default function ProjectsPage() {
                   <Input
                     placeholder="Search projects..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) =>
+                      updateSearchParams("search", e.target.value)
+                    }
                     className="pl-10"
                   />
                 </div>
@@ -636,9 +676,13 @@ export default function ProjectsPage() {
                       ))}
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <Button className=" w-full transition-all duration-300 hover:scale-105">
+                      <Link to={project.id.toString()}>View Details</Link>
+                    </Button>
+
+                    {/* <div className="flex items-center justify-between">
                       <Button className="transition-all duration-300 hover:scale-105">
-                        View Details
+                        <Link to={project.id.toString()}>View Details</Link>
                       </Button>
                       <div className="flex items-center gap-2">
                         <img
@@ -658,7 +702,7 @@ export default function ProjectsPage() {
                           </p>
                         </div>
                       </div>
-                    </div>
+                    </div> */}
                   </CardContent>
                 </Card>
               ))}

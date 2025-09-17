@@ -12,7 +12,11 @@ interface CTASectionProps {
   title?: string;
   description?: string;
   primaryButtonText?: string;
+  primaryButtonLink?: string;
+  primaryButtonIcon?: React.ReactNode;
   secondaryButtonText?: string;
+  secondaryButtonLink?: string;
+  secondaryButtonIcon?: React.ReactNode;
   className?: string;
 }
 
@@ -21,6 +25,12 @@ export function CTASection({
   description = "Get a free consultation and quote for your next architectural project. Let's build something amazing together.",
   primaryButtonText = "Get Free Quote",
   secondaryButtonText = "Call Us Now",
+  primaryButtonLink = "#",
+  primaryButtonIcon = (
+    <FiArrowRight className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
+  ),
+  secondaryButtonLink = "#",
+  secondaryButtonIcon = <FiPhone className="mr-2 w-5 h-5" />,
   className = "",
 }: CTASectionProps) {
   return (
@@ -37,17 +47,19 @@ export function CTASection({
             <Button
               size="lg"
               variant="secondary"
-              className="text-lg px-8 transition-all duration-300 hover:scale-105 hover:shadow-xl group"
+              className="text-lg px-8 transition-all duration-300 hover:bg-primary-foreground hover:text-primary hover:scale-105 hover:shadow-xl group"
+              onClick={() => (window.location.href = primaryButtonLink)}
             >
+              {primaryButtonIcon}
               {primaryButtonText}
-              <FiArrowRight className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
             </Button>
             <Button
               size="lg"
               variant="outline"
               className="text-lg px-8 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground hover:text-primary bg-transparent transition-all duration-300 hover:scale-105 hover:shadow-xl"
+              onClick={() => (window.location.href = secondaryButtonLink)}
             >
-              <FiPhone className="mr-2 w-5 h-5" />
+              {secondaryButtonIcon}
               {secondaryButtonText}
             </Button>
           </div>

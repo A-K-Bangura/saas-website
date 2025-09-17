@@ -14,6 +14,7 @@ import {
 } from "@/src/components/ui/Select";
 import { useGSAPFadeIn } from "@/src/hooks/use-gsap-fade-in";
 import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 // import { Button } from "@/components/ui/button"
 // import { Input } from "@/components/ui/input"
 // import { Badge } from "@/components/ui/badge"
@@ -27,6 +28,7 @@ import {
   FiUser,
   FiEye,
   FiMail,
+  FiX,
 } from "react-icons/fi";
 // import { useGSAPFadeIn } from "@/hooks/use-gsap-fade-in"
 
@@ -150,17 +152,34 @@ const mockProfessionals: Professional[] = [
 ];
 
 export default function ProfilesPage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedProfession, setSelectedProfession] = useState<string>("all");
-  const [selectedExperience, setSelectedExperience] = useState<string>("all");
-  const [selectedLocation, setSelectedLocation] = useState<string>("all");
-  const [selectedRating, setSelectedRating] = useState<string>("all");
-  const [selectedProjectType, setSelectedProjectType] = useState<string>("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  // Get values from URL search params with defaults
+  const searchTerm = searchParams.get("search") || "";
+  const selectedProfession = searchParams.get("profession") || "all";
+  const selectedExperience = searchParams.get("experience") || "all";
+  const selectedLocation = searchParams.get("location") || "all";
+  const selectedRating = searchParams.get("rating") || "all";
+  const selectedProjectType = searchParams.get("projectType") || "all";
+
   const [filteredProfessionals, setFilteredProfessionals] =
     useState<Professional[]>(mockProfessionals);
   const [showFilters, setShowFilters] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const fadeInRef = useGSAPFadeIn();
+
+  // Helper function to update URL search params
+  const updateSearchParams = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === "all" || value === "") {
+      params.delete(key);
+    } else {
+      params.set(key, value);
+    }
+    setSearchParams(params);
+  };
 
   // Filter professionals based on search and filters
   useEffect(() => {
@@ -220,13 +239,16 @@ export default function ProfilesPage() {
   ]);
 
   const clearFilters = () => {
-    setSearchTerm("");
-    setSelectedProfession("all");
-    setSelectedExperience("all");
-    setSelectedLocation("all");
-    setSelectedRating("all");
-    setSelectedProjectType("all");
+    setSearchParams({});
   };
+
+  const hasActiveFilters =
+    searchTerm ||
+    selectedProfession !== "all" ||
+    selectedExperience !== "all" ||
+    selectedLocation !== "all" ||
+    selectedRating !== "all" ||
+    selectedProjectType !== "all";
 
   const locations = Array.from(
     new Set(mockProfessionals.map((p) => p.location))
@@ -272,29 +294,22 @@ export default function ProfilesPage() {
 
       <div className="container mx-auto px-2 max-w-7xl py-4">
         <div className="flex flex-col lg:flex-row gap-4">
-          {/* Mobile Filter Toggle */}
-          <div className="lg:hidden">
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-              className="w-full mb-4"
-            >
-              <FiFilter className="mr-2" size={16} />
-              {showFilters ? "Hide Filters" : "Show Filters"}
-            </Button>
-          </div>
-
-          {/* Filter Panel */}
-          <div
-            className={`lg:w-70 lg:block ${showFilters ? "block" : "hidden"}`}
-          >
-            <Card className="sticky top-24">
-              <CardContent className="py-6 px-3">
+          {/* Desktop Filter Panel */}
+          <div className="hidden lg:block w-70 flex-shrink-0">
+            <div className="sticky top-24">
+              <Card className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold">Filters</h3>
-                  <Button variant="ghost" size="sm" onClick={clearFilters}>
-                    Clear All
-                  </Button>
+                  {hasActiveFilters && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearFilters}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      Clear All
+                    </Button>
+                  )}
                 </div>
 
                 <div className="space-y-6">
@@ -305,7 +320,9 @@ export default function ProfilesPage() {
                     </label>
                     <Select
                       value={selectedProfession}
-                      onValueChange={setSelectedProfession}
+                      onValueChange={(value) =>
+                        updateSearchParams("profession", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="All Professions" />
@@ -325,7 +342,9 @@ export default function ProfilesPage() {
                     </label>
                     <Select
                       value={selectedExperience}
-                      onValueChange={setSelectedExperience}
+                      onValueChange={(value) =>
+                        updateSearchParams("experience", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="All Experience Levels" />
@@ -348,7 +367,9 @@ export default function ProfilesPage() {
                     </label>
                     <Select
                       value={selectedLocation}
-                      onValueChange={setSelectedLocation}
+                      onValueChange={(value) =>
+                        updateSearchParams("location", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="All Locations" />
@@ -371,7 +392,9 @@ export default function ProfilesPage() {
                     </label>
                     <Select
                       value={selectedRating}
-                      onValueChange={setSelectedRating}
+                      onValueChange={(value) =>
+                        updateSearchParams("rating", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="All Ratings" />
@@ -391,7 +414,9 @@ export default function ProfilesPage() {
                     </label>
                     <Select
                       value={selectedProjectType}
-                      onValueChange={setSelectedProjectType}
+                      onValueChange={(value) =>
+                        updateSearchParams("projectType", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="All Project Types" />
@@ -407,26 +432,198 @@ export default function ProfilesPage() {
                     </Select>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </Card>
+            </div>
           </div>
 
-          {/* Profiles Grid */}
+          {/* Main Content */}
           <div className="flex-1">
-            <div className="flex flex-col items-start mb-2">
-              {/* Search Bar */}
-              <div className="w-[70%] mx-auto mb-4">
+            {/* Mobile Search and Filter Toggle */}
+            <div className="lg:hidden mb-6 space-y-4">
+              <div className="relative">
+                <FiSearch
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+                  size={16}
+                />
+                <Input
+                  placeholder="Search by name, profession, or specialty..."
+                  value={searchTerm}
+                  onChange={(e) => updateSearchParams("search", e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowMobileFilters(!showMobileFilters)}
+                  className="flex items-center gap-2"
+                >
+                  <FiFilter size={16} />
+                  Filters
+                  {hasActiveFilters && (
+                    <Badge variant="secondary" className="ml-1">
+                      Active
+                    </Badge>
+                  )}
+                </Button>
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters}>
+                    Clear All
+                  </Button>
+                )}
+              </div>
+
+              {/* Mobile Filters */}
+              {showMobileFilters && (
+                <Card className="p-4">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold">Filters</h3>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowMobileFilters(false)}
+                      >
+                        <FiX size={16} />
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">
+                          Profession
+                        </label>
+                        <Select
+                          value={selectedProfession}
+                          onValueChange={(value) =>
+                            updateSearchParams("profession", value)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="All Professions" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Professions</SelectItem>
+                            <SelectItem value="Architect">Architect</SelectItem>
+                            <SelectItem value="Constructor">
+                              Constructor
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">
+                          Experience
+                        </label>
+                        <Select
+                          value={selectedExperience}
+                          onValueChange={(value) =>
+                            updateSearchParams("experience", value)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="All Experience" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Experience</SelectItem>
+                            <SelectItem value="0-5">0-5 years</SelectItem>
+                            <SelectItem value="6-10">6-10 years</SelectItem>
+                            <SelectItem value="11+">11+ years</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">
+                          Location
+                        </label>
+                        <Select
+                          value={selectedLocation}
+                          onValueChange={(value) =>
+                            updateSearchParams("location", value)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="All Locations" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Locations</SelectItem>
+                            {locations.map((location) => (
+                              <SelectItem key={location} value={location}>
+                                {location}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">
+                          Rating
+                        </label>
+                        <Select
+                          value={selectedRating}
+                          onValueChange={(value) =>
+                            updateSearchParams("rating", value)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="All Ratings" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Ratings</SelectItem>
+                            <SelectItem value="4+">4+ Stars</SelectItem>
+                            <SelectItem value="4.5+">4.5+ Stars</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-medium mb-2 block">
+                          Project Type
+                        </label>
+                        <Select
+                          value={selectedProjectType}
+                          onValueChange={(value) =>
+                            updateSearchParams("projectType", value)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="All Types" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Types</SelectItem>
+                            {projectTypes.map((type) => (
+                              <SelectItem key={type} value={type}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              )}
+            </div>
+
+            {/* Results Count */}
+            <div className="mb-2">
+              {/* Desktop Search */}
+              <div className="w-[70%] mx-auto hidden lg:block mb-4">
                 <div className="relative">
                   <FiSearch
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground"
-                    size={20}
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+                    size={16}
                   />
                   <Input
-                    type="text"
                     placeholder="Search by name, profession, or specialty..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-12 h-5 text-lg"
+                    onChange={(e) =>
+                      updateSearchParams("search", e.target.value)
+                    }
+                    className="pl-10"
                   />
                 </div>
               </div>
@@ -506,6 +703,10 @@ export default function ProfilesPage() {
                       <Button
                         variant="outline"
                         className="flex-1 transition-all duration-300 hover:scale-105 bg-transparent"
+                        onClick={() => {
+                          // Set the params and navigate to the profile's project page
+                          navigate(`/profiles/${professional.id}`);
+                        }}
                       >
                         <FiEye className="mr-2" size={16} />
                         View Work
