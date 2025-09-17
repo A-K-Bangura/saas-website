@@ -31,6 +31,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/src/components/ui/Carousel";
 import { Badge } from "@/src/components/ui/Badge";
 import {
@@ -194,6 +195,9 @@ export default function ProjectDetailsPage() {
   const params = useParams();
   const [project, setProject] = useState<ProjectDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [heroApi, setHeroApi] = useState<CarouselApi>();
+  const [progressApi, setProgressApi] = useState<CarouselApi>();
+  const [rendersApi, setRendersApi] = useState<CarouselApi>();
 
   const heroRef = useRef<HTMLDivElement>(null);
   const sectionsRef = useRef<HTMLDivElement>(null);
@@ -240,6 +244,55 @@ export default function ProjectDetailsPage() {
       );
     }
   }, [project]);
+
+  // Auto-play hero carousel every 5 seconds
+  useEffect(() => {
+    if (!heroApi) return;
+
+    const interval = setInterval(() => {
+      heroApi.scrollNext();
+    }, 7000);
+
+    return () => clearInterval(interval);
+  }, [heroApi]);
+
+  // Auto-play progress carousel on hover0008970-=-
+  const handleProgressMouseEnter = () => {
+    if (!progressApi) return;
+
+    const interval = setInterval(() => {
+      progressApi.scrollNext();
+    }, 7000);
+
+    // Store interval ID for cleanup
+    (progressApi as any).autoPlayInterval = interval;
+  };
+
+  const handleProgressMouseLeave = () => {
+    if (progressApi && (progressApi as any).autoPlayInterval) {
+      clearInterval((progressApi as any).autoPlayInterval);
+      (progressApi as any).autoPlayInterval = null;
+    }
+  };
+
+  // Auto-play renders carousel on hover
+  const handleRendersMouseEnter = () => {
+    if (!rendersApi) return;
+
+    const interval = setInterval(() => {
+      rendersApi.scrollNext();
+    }, 7000);
+
+    // Store interval ID for cleanup
+    (rendersApi as any).autoPlayInterval = interval;
+  };
+
+  const handleRendersMouseLeave = () => {
+    if (rendersApi && (rendersApi as any).autoPlayInterval) {
+      clearInterval((rendersApi as any).autoPlayInterval);
+      (rendersApi as any).autoPlayInterval = null;
+    }
+  };
 
   if (loading) {
     return (
@@ -301,7 +354,15 @@ export default function ProjectDetailsPage() {
           </Link>
         </div>
 
-        <Carousel className="h-full">
+        <Carousel
+          className="h-full"
+          setApi={setHeroApi}
+          opts={{
+            loop: true,
+            duration: 20,
+            dragFree: false,
+          }}
+        >
           <CarouselContent>
             {project.heroImages.map((image, index) => (
               <CarouselItem key={index}>
@@ -463,8 +524,20 @@ export default function ProjectDetailsPage() {
               <h3 className="text-xl font-semibold mb-4">
                 Construction Progress
               </h3>
-              <div className="relative w-full md:w-[80%] h-[350px] md:h-[400px] lg:h-[450px]">
-                <Carousel className="overflow-hidden">
+              <div
+                className="relative w-full md:w-[80%] h-[350px] md:h-[400px] lg:h-[450px]"
+                onMouseEnter={handleProgressMouseEnter}
+                onMouseLeave={handleProgressMouseLeave}
+              >
+                <Carousel
+                  className="overflow-hidden"
+                  setApi={setProgressApi}
+                  opts={{
+                    loop: true,
+                    duration: 20,
+                    dragFree: false,
+                  }}
+                >
                   <CarouselContent>
                     {project.progressShots.map((image, index) => (
                       <CarouselItem
@@ -495,8 +568,20 @@ export default function ProjectDetailsPage() {
               <h3 className="text-xl font-semibold mb-4">
                 Architectural Renders
               </h3>
-              <div className="relative w-full md:w-[80%] h-[350px] md:h-[400px] lg:h-[450px]">
-                <Carousel className="overflow-hidden">
+              <div
+                className="relative w-full md:w-[80%] h-[350px] md:h-[400px] lg:h-[450px]"
+                onMouseEnter={handleRendersMouseEnter}
+                onMouseLeave={handleRendersMouseLeave}
+              >
+                <Carousel
+                  className="overflow-hidden"
+                  setApi={setRendersApi}
+                  opts={{
+                    loop: true,
+                    duration: 20,
+                    dragFree: false,
+                  }}
+                >
                   <CarouselContent>
                     {project.renders.map((image, index) => (
                       <CarouselItem
