@@ -296,4 +296,28 @@ import leftArrow from "./assets/cursor_icons/left-arrow.png"; */
         0 0 30px var(--color-accent);
     }
   }
+
+  /* Fade carousel effect with GSAP */
+  .fade-carousel {
+    position: relative;
+  }
+
+  .fade-carousel [data-slot="carousel-item"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+  }
+
+  .fade-carousel [data-slot="carousel-item"]:first-child {
+    opacity: 1;
+    position: relative;
+  }
+
+  .fade-carousel [data-slot="carousel-item"].active {
+    opacity: 1;
+    position: relative;
+  }
 }

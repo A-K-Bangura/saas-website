@@ -256,7 +256,42 @@ export default function ProjectDetailsPage() {
     return () => clearInterval(interval);
   }, [heroApi]);
 
-  // Auto-play progress carousel on hover0008970-=-
+  // GSAP fade transitions for hero carousel
+  useEffect(() => {
+    if (!heroApi) return;
+
+    const handleSelect = () => {
+      const carouselContainer = document.querySelector(".hero-carousel");
+      if (!carouselContainer) return;
+
+      const items = carouselContainer.querySelectorAll(
+        '[data-slot="carousel-item"]'
+      );
+      const currentIndex = heroApi.selectedScrollSnap();
+
+      items.forEach((item, index) => {
+        if (index === currentIndex) {
+          gsap.to(item, { opacity: 1, duration: 0.5, ease: "power2.inOut" });
+          item.classList.add("active");
+        } else {
+          gsap.to(item, { opacity: 0, duration: 0.5, ease: "power2.inOut" });
+          item.classList.remove("active");
+        }
+      });
+    };
+
+    const timeoutId = setTimeout(() => {
+      heroApi.on("select", handleSelect);
+      handleSelect(); // Set initial state
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      heroApi.off("select", handleSelect);
+    };
+  }, [heroApi]);
+
+  // Auto-play progress carousel on hover
   const handleProgressMouseEnter = () => {
     if (!progressApi) return;
 
@@ -274,6 +309,41 @@ export default function ProjectDetailsPage() {
       (progressApi as any).autoPlayInterval = null;
     }
   };
+
+  // GSAP fade transitions for progress carousel
+  useEffect(() => {
+    if (!progressApi) return;
+
+    const handleSelect = () => {
+      const carouselContainer = document.querySelector(".progress-carousel");
+      if (!carouselContainer) return;
+
+      const items = carouselContainer.querySelectorAll(
+        '[data-slot="carousel-item"]'
+      );
+      const currentIndex = progressApi.selectedScrollSnap();
+
+      items.forEach((item, index) => {
+        if (index === currentIndex) {
+          gsap.to(item, { opacity: 1, duration: 0.5, ease: "power2.inOut" });
+          item.classList.add("active");
+        } else {
+          gsap.to(item, { opacity: 0, duration: 0.5, ease: "power2.inOut" });
+          item.classList.remove("active");
+        }
+      });
+    };
+
+    const timeoutId = setTimeout(() => {
+      progressApi.on("select", handleSelect);
+      handleSelect(); // Set initial state
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      progressApi.off("select", handleSelect);
+    };
+  }, [progressApi]);
 
   // Auto-play renders carousel on hover
   const handleRendersMouseEnter = () => {
@@ -293,6 +363,41 @@ export default function ProjectDetailsPage() {
       (rendersApi as any).autoPlayInterval = null;
     }
   };
+
+  // GSAP fade transitions for renders carousel
+  useEffect(() => {
+    if (!rendersApi) return;
+
+    const handleSelect = () => {
+      const carouselContainer = document.querySelector(".renders-carousel");
+      if (!carouselContainer) return;
+
+      const items = carouselContainer.querySelectorAll(
+        '[data-slot="carousel-item"]'
+      );
+      const currentIndex = rendersApi.selectedScrollSnap();
+
+      items.forEach((item, index) => {
+        if (index === currentIndex) {
+          gsap.to(item, { opacity: 1, duration: 0.5, ease: "power2.inOut" });
+          item.classList.add("active");
+        } else {
+          gsap.to(item, { opacity: 0, duration: 0.5, ease: "power2.inOut" });
+          item.classList.remove("active");
+        }
+      });
+    };
+
+    const timeoutId = setTimeout(() => {
+      rendersApi.on("select", handleSelect);
+      handleSelect(); // Set initial state
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      rendersApi.off("select", handleSelect);
+    };
+  }, [rendersApi]);
 
   if (loading) {
     return (
@@ -355,15 +460,15 @@ export default function ProjectDetailsPage() {
         </div>
 
         <Carousel
-          className="h-full"
+          className="h-full hero-carousel"
           setApi={setHeroApi}
           opts={{
             loop: true,
-            duration: 20,
+            duration: 0,
             dragFree: false,
           }}
         >
-          <CarouselContent>
+          <CarouselContent className="fade-carousel">
             {project.heroImages.map((image, index) => (
               <CarouselItem key={index}>
                 <div className="relative h-[90vh]">
@@ -530,15 +635,15 @@ export default function ProjectDetailsPage() {
                 onMouseLeave={handleProgressMouseLeave}
               >
                 <Carousel
-                  className="overflow-hidden"
+                  className="overflow-hidden progress-carousel"
                   setApi={setProgressApi}
                   opts={{
                     loop: true,
-                    duration: 20,
+                    duration: 0,
                     dragFree: false,
                   }}
                 >
-                  <CarouselContent>
+                  <CarouselContent className="fade-carousel">
                     {project.progressShots.map((image, index) => (
                       <CarouselItem
                         key={index}
@@ -574,15 +679,15 @@ export default function ProjectDetailsPage() {
                 onMouseLeave={handleRendersMouseLeave}
               >
                 <Carousel
-                  className="overflow-hidden"
+                  className="overflow-hidden renders-carousel"
                   setApi={setRendersApi}
                   opts={{
                     loop: true,
-                    duration: 20,
+                    duration: 0,
                     dragFree: false,
                   }}
                 >
-                  <CarouselContent>
+                  <CarouselContent className="fade-carousel">
                     {project.renders.map((image, index) => (
                       <CarouselItem
                         key={index}
