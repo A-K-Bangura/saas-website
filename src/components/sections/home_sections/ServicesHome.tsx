@@ -5,10 +5,11 @@
 //   CardHeader,
 //   CardTitle,
 // } from "@/components/ui/card";
+import { Link } from "react-router-dom";
 import { Section } from "../../ui/Section";
 import { Container } from "../../ui/Container";
 // import { TypographyH2, TypographyP } from "@/components/ui/typography";
-import { FiHome, FiTool, FiUsers } from "react-icons/fi";
+import { FiHome, FiTool, FiUsers, FiDollarSign, FiShield, FiArrowRight } from "react-icons/fi";
 import { useGsapScrollTrigger } from "@/src/hooks/use-gsap-scroll-trigger";
 import { TypographyH2, TypographyP } from "../../ui/Typography";
 import {
@@ -18,6 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../../ui/Card";
+import { Button } from "../../ui/Button";
 
 const services = [
   {
@@ -86,12 +88,12 @@ export function Services() {
 
         <div
           ref={servicesRef}
-          className="grid grid-cols-1 md:grid-cols-2 gap-8"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 gsap-scroll-trigger"
         >
           {services.map((service, index) => (
             <Card
               key={index}
-              className="group hover:shadow-xl transition-all duration-500 hover:-translate-y-2 cursor-pointer"
+              className="group hover:shadow-xl transition-all duration-500 hover:-translate-y-2"
             >
               <CardHeader>
                 <div className="flex items-center space-x-4">
@@ -107,7 +109,7 @@ export function Services() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2">
+                <ul className="space-y-2 mb-4">
                   {service.features.map((feature, featureIndex) => (
                     <li
                       key={featureIndex}
@@ -121,6 +123,79 @@ export function Services() {
               </CardContent>
             </Card>
           ))}
+          
+          {/* New Service Request Cards */}
+          <Card className="group hover:shadow-xl transition-all duration-500 hover:-translate-y-2">
+            <CardHeader>
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-accent/25">
+                  <FiDollarSign className="w-6 h-6 text-accent transition-transform duration-300 group-hover:scale-110" />
+                </div>
+                <CardTitle className="text-xl group-hover:text-accent transition-colors duration-300">
+                  Free Estimation
+                </CardTitle>
+              </div>
+              <CardDescription className="text-base leading-relaxed">
+                Get a detailed cost estimate for your construction project.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to="/services/estimation">
+                <Button className="w-full group-hover:scale-105 transition-transform duration-300">
+                  Request Estimate
+                  <FiArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-xl transition-all duration-500 hover:-translate-y-2">
+            <CardHeader>
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-accent/25">
+                  <FiUsers className="w-6 h-6 text-accent transition-transform duration-300 group-hover:scale-110" />
+                </div>
+                <CardTitle className="text-xl group-hover:text-accent transition-colors duration-300">
+                  Consultancy
+                </CardTitle>
+              </div>
+              <CardDescription className="text-base leading-relaxed">
+                Expert consultation for sustainability, cost optimization, and project management.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to="/services/consultancy">
+                <Button className="w-full group-hover:scale-105 transition-transform duration-300">
+                  Request Consultation
+                  <FiArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-xl transition-all duration-500 hover:-translate-y-2">
+            <CardHeader>
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-accent/25">
+                  <FiShield className="w-6 h-6 text-accent transition-transform duration-300 group-hover:scale-110" />
+                </div>
+                <CardTitle className="text-xl group-hover:text-accent transition-colors duration-300">
+                  Legal Advisory
+                </CardTitle>
+              </div>
+              <CardDescription className="text-base leading-relaxed">
+                Professional legal guidance for property, contracts, and permits.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to="/services/legal-advisory">
+                <Button className="w-full group-hover:scale-105 transition-transform duration-300">
+                  Book Consultation
+                  <FiArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
         </div>
       </Container>
     </Section>

@@ -1,9 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-// import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
-// import { Badge } from "@/components/ui/badge";
-// import { Card, CardContent } from "@/components/ui/card";
 import {
   FiSearch,
   FiFilter,
@@ -18,6 +14,7 @@ import { Card, CardContent } from "@/src/components/ui/Card";
 import { Button } from "@/src/components/ui/Button";
 import { Input } from "@/src/components/ui/Input";
 import { Badge } from "@/src/components/ui/Badge";
+import { Skeleton } from "@/src/components/ui/Skeleton";
 import {
   Select,
   SelectContent,
@@ -26,151 +23,9 @@ import {
   SelectValue,
 } from "@/src/components/ui/Select";
 import { Link } from "react-router-dom";
+import { api, type Project } from "@/src/lib/api";
 
 gsap.registerPlugin(ScrollTrigger);
-
-interface Professional {
-  id: number;
-  name: string;
-  profession: string;
-  image: string;
-}
-
-interface Project {
-  id: number;
-  name: string;
-  type: "Residential" | "Commercial" | "Public";
-  location: string;
-  year: number;
-  rating: number;
-  image: string;
-  badges: string[];
-  description: string;
-  professional: Professional;
-  detailsLink: string;
-}
-
-const projects: Project[] = [
-  {
-    id: 101,
-    name: "EcoSmart Housing Estate",
-    type: "Residential",
-    location: "Freetown",
-    year: 2023,
-    rating: 4.9,
-    image: "/modern-sustainable-family-home-architecture.jpg",
-    badges: ["Eco-friendly", "Affordable Housing"],
-    description:
-      "A modern housing estate designed with sustainable materials and solar energy integration for affordable living.",
-    professional: {
-      id: 1,
-      name: "James Kamara",
-      profession: "Architect",
-      image: "/professional-african-man-constructor.jpg",
-    },
-    detailsLink: "/projects/ecosmart-housing",
-  },
-  {
-    id: 102,
-    name: "Sierra Leone Medical Center",
-    type: "Public",
-    location: "Bo",
-    year: 2022,
-    rating: 4.8,
-    image: "/modern-health-center-building-architecture.jpg",
-    badges: ["Award-winning", "Healthcare"],
-    description:
-      "State-of-the-art medical facility designed to serve the community with modern healthcare infrastructure.",
-    professional: {
-      id: 2,
-      name: "Fatima Sesay",
-      profession: "Architect",
-      image: "/professional-african-woman-architect.jpg",
-    },
-    detailsLink: "/projects/medical-center",
-  },
-  {
-    id: 103,
-    name: "Green Office Complex",
-    type: "Commercial",
-    location: "Freetown",
-    year: 2023,
-    rating: 4.7,
-    image: "/green-office-building-sustainable-architecture.jpg",
-    badges: ["Eco-friendly", "LEED Certified"],
-    description:
-      "Modern office complex featuring green building technologies and sustainable design principles.",
-    professional: {
-      id: 3,
-      name: "Mohamed Bangura",
-      profession: "Civil Engineer",
-      image: "/professional-african-man-constructor-2.jpg",
-    },
-    detailsLink: "/projects/green-office",
-  },
-  {
-    id: 104,
-    name: "Community School Project",
-    type: "Public",
-    location: "Kenema",
-    year: 2022,
-    rating: 4.9,
-    image: "/sustainable-school-building-architecture.jpg",
-    badges: ["Community Impact", "Educational"],
-    description:
-      "Educational facility designed to provide quality learning environment for local community children.",
-    professional: {
-      id: 4,
-      name: "Aminata Koroma",
-      profession: "Architect",
-      image: "/professional-african-woman-architect-2.jpg",
-    },
-    detailsLink: "/projects/community-school",
-  },
-  {
-    id: 105,
-    name: "Luxury Residential Villa",
-    type: "Residential",
-    location: "Freetown",
-    year: 2023,
-    rating: 4.8,
-    image: "/modern-sustainable-architecture-building-in-sierra.jpg",
-    badges: ["Luxury", "Custom Design"],
-    description:
-      "High-end residential villa featuring contemporary design with traditional Sierra Leonean architectural elements.",
-    professional: {
-      id: 5,
-      name: "Ibrahim Turay",
-      profession: "Architect",
-      image: "/professional-african-man-constructor-3.jpg",
-    },
-    detailsLink: "/projects/luxury-villa",
-  },
-  {
-    id: 106,
-    name: "Sustainable Market Complex",
-    type: "Commercial",
-    location: "Makeni",
-    year: 2022,
-    rating: 4.6,
-    image: "/community-building-architecture-sierra-leone-local.jpg",
-    badges: ["Sustainable", "Community"],
-    description:
-      "Modern market facility designed to support local commerce while incorporating sustainable building practices.",
-    professional: {
-      id: 6,
-      name: "Adama Conteh",
-      profession: "Civil Engineer",
-      image: "/professional-african-woman-architect-3.jpg",
-    },
-    detailsLink: "/projects/market-complex",
-  },
-];
-
-const projectTypes = ["All", "Residential", "Commercial", "Public"];
-const locations = ["All", "Freetown", "Bo", "Kenema", "Makeni"];
-const years = ["All", "2023", "2022", "2021"];
-const ratings = ["All", "4.5+", "4.0+", "3.5+"];
 
 export default function ProjectsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -180,10 +35,17 @@ export default function ProjectsPage() {
   const selectedType = searchParams.get("type") || "All";
   const selectedLocation = searchParams.get("location") || "All";
   const selectedYear = searchParams.get("year") || "All";
-  const selectedRating = searchParams.get("rating") || "All";
+  const selectedStatus = searchParams.get("status") || "All";
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
 
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [filteredProjects, setFilteredProjects] = useState(projects);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [projectTypes, setProjectTypes] = useState<string[]>([]);
+  const [locations, setLocations] = useState<string[]>([]);
+  const [years, setYears] = useState<string[]>([]);
 
   // Helper function to update URL search params
   const updateSearchParams = (key: string, value: string) => {
@@ -193,15 +55,54 @@ export default function ProjectsPage() {
     } else {
       params.set(key, value);
     }
+    params.delete("page"); // Reset to page 1 when filters change
     setSearchParams(params);
   };
 
   const cardsRef = useRef<HTMLDivElement>(null);
   const filtersRef = useRef<HTMLDivElement>(null);
 
+  // Load projects from API
+  useEffect(() => {
+    loadProjects();
+  }, [searchTerm, selectedType, selectedLocation, selectedYear, selectedStatus, currentPage]);
+
+  const loadProjects = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.getProjects({
+        search: searchTerm || undefined,
+        type: selectedType !== "All" ? selectedType : undefined,
+        location: selectedLocation !== "All" ? selectedLocation : undefined,
+        year: selectedYear !== "All" ? parseInt(selectedYear, 10) : undefined,
+        status: selectedStatus !== "All" ? selectedStatus : undefined,
+        page: currentPage,
+        per_page: 12,
+      });
+
+      setProjects(response.data);
+      setTotalPages(response.meta.last_page);
+      setTotalCount(response.meta.total);
+
+      // Extract unique values for filters
+      const uniqueTypes = Array.from(new Set(response.data.map(p => p.type).filter(Boolean))) as string[];
+      const uniqueLocations = Array.from(new Set(response.data.map(p => p.location).filter(Boolean))) as string[];
+      const uniqueYears = Array.from(new Set(response.data.map(p => p.year?.toString()).filter(Boolean))) as string[];
+
+      setProjectTypes(["All", ...uniqueTypes]);
+      setLocations(["All", ...uniqueLocations]);
+      setYears(["All", ...uniqueYears.sort().reverse()]);
+    } catch (error) {
+      console.error("Failed to load projects:", error);
+      setProjects([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     // GSAP animations
-    if (cardsRef.current) {
+    if (cardsRef.current && !isLoading) {
       gsap.fromTo(
         cardsRef.current.children,
         { opacity: 0, y: 30 },
@@ -219,54 +120,14 @@ export default function ProjectsPage() {
         }
       );
     }
-  }, [filteredProjects]);
+  }, [projects, isLoading]);
 
-  useEffect(() => {
-    let filtered = projects;
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (project) =>
-          project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          project.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          project.description
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          project.badges.some((badge) =>
-            badge.toLowerCase().includes(searchTerm.toLowerCase())
-          )
-      );
-    }
-
-    if (selectedType !== "All") {
-      filtered = filtered.filter((project) => project.type === selectedType);
-    }
-
-    if (selectedLocation !== "All") {
-      filtered = filtered.filter(
-        (project) => project.location === selectedLocation
-      );
-    }
-
-    if (selectedYear !== "All") {
-      filtered = filtered.filter(
-        (project) => project.year.toString() === selectedYear
-      );
-    }
-
-    if (selectedRating !== "All") {
-      const minRating = Number.parseFloat(selectedRating.replace("+", ""));
-      filtered = filtered.filter((project) => project.rating >= minRating);
-    }
-
-    setFilteredProjects(filtered);
-  }, [
-    searchTerm,
-    selectedType,
-    selectedLocation,
-    selectedYear,
-    selectedRating,
-  ]);
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", page.toString());
+    setSearchParams(params);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const clearFilters = () => {
     setSearchParams({});
@@ -277,7 +138,7 @@ export default function ProjectsPage() {
     selectedType !== "All" ||
     selectedLocation !== "All" ||
     selectedYear !== "All" ||
-    selectedRating !== "All";
+    selectedStatus !== "All";
 
   return (
     <div className="min-h-screen bg-background">
@@ -297,10 +158,13 @@ export default function ProjectsPage() {
       </div>
 
       <div className="container mx-auto px-2 max-w-7xl py-4">
-        <div className="flex flex-col lg:flex-row gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Desktop Filter Panel */}
-          <div className="hidden lg:block w-70 flex-shrink-0">
-            <div className="sticky top-24" ref={filtersRef}>
+          <div className="hidden lg:block lg:col-span-3">
+            <div
+              className="sticky top-16 self-start max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-thin"
+              ref={filtersRef}
+            >
               <Card className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold">Filters</h3>
@@ -408,26 +272,25 @@ export default function ProjectsPage() {
                     </Select>
                   </div>
 
-                  {/* Rating */}
+                  {/* Status */}
                   <div>
                     <label className="text-sm font-medium mb-2 block">
-                      Rating
+                      Status
                     </label>
                     <Select
-                      value={selectedRating}
+                      value={selectedStatus}
                       onValueChange={(value) =>
-                        updateSearchParams("rating", value)
+                        updateSearchParams("status", value)
                       }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="All" />
                       </SelectTrigger>
                       <SelectContent>
-                        {ratings.map((rating) => (
-                          <SelectItem key={rating} value={rating}>
-                            {rating}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="All">All Statuses</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="ongoing">Ongoing</SelectItem>
+                        <SelectItem value="upcoming">Upcoming</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -437,7 +300,7 @@ export default function ProjectsPage() {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1">
+          <div className="lg:col-span-9">
             {/* Mobile Search and Filter Toggle */}
             <div className="lg:hidden mb-6 space-y-4">
               <div className="relative">
@@ -560,23 +423,22 @@ export default function ProjectsPage() {
 
                       <div>
                         <label className="text-sm font-medium mb-2 block">
-                          Rating
+                          Status
                         </label>
                         <Select
-                          value={selectedRating}
+                          value={selectedStatus}
                           onValueChange={(value) =>
-                            updateSearchParams("rating", value)
+                            updateSearchParams("status", value)
                           }
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="All" />
                           </SelectTrigger>
                           <SelectContent>
-                            {ratings.map((rating) => (
-                              <SelectItem key={rating} value={rating}>
-                                {rating}
-                              </SelectItem>
-                            ))}
+                            <SelectItem value="All">All Statuses</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                            <SelectItem value="ongoing">Ongoing</SelectItem>
+                            <SelectItem value="upcoming">Upcoming</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -606,78 +468,103 @@ export default function ProjectsPage() {
                 </div>
               </div>
               <p className="text-muted-foreground">
-                Showing {filteredProjects.length} of {projects.length} projects
+                {totalCount} project{totalCount !== 1 ? "s" : ""} found
               </p>
             </div>
 
             {/* Projects Grid */}
-            <div
-              ref={cardsRef}
-              className="grid grid-cols-1 md:grid-cols-2 gap-2"
-            >
-              {filteredProjects.map((project) => (
-                <Card
-                  key={project.id}
-                  className="group rounded-none overflow-hidden hover:shadow-lg transition-all duration-300"
-                >
-                  <div className="relative overflow-hidden">
-                    <img
-                      src={project.image || "/placeholder.svg"}
-                      alt={project.name}
-                      width={400}
-                      height={250}
-                      loading="lazy"
-                      className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div className="absolute top-4 left-4">
-                      <Badge
-                        variant="secondary"
-                        className="bg-background/90 text-foreground"
-                      >
-                        {project.type}
-                      </Badge>
+            {isLoading ? (
+              <div
+                ref={cardsRef}
+                className="grid grid-cols-1 md:grid-cols-2 gap-2"
+              >
+                {[...Array(6)].map((_, i) => (
+                  <Card key={i} className="rounded-none">
+                    <Skeleton className="w-full h-48" />
+                    <CardContent className="px-4">
+                      <Skeleton className="h-6 w-3/4 mb-2" />
+                      <Skeleton className="h-4 w-full mb-4" />
+                      <Skeleton className="h-10 w-full" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div
+                ref={cardsRef}
+                className="grid grid-cols-1 md:grid-cols-2 gap-2"
+              >
+                {projects.map((project) => (
+                  <Card
+                    key={project.id}
+                    className="group rounded-none overflow-hidden hover:shadow-lg transition-all duration-300"
+                  >
+                    <div className="relative overflow-hidden">
+                      <img
+                        src={project.hero_images?.[0] || "/placeholder.svg"}
+                        alt={project.title}
+                        width={400}
+                        height={250}
+                        loading="lazy"
+                        className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      {project.type && (
+                        <div className="absolute top-4 left-4">
+                          <Badge
+                            variant="secondary"
+                            className="bg-background/90 text-foreground"
+                          >
+                            {project.type}
+                          </Badge>
+                        </div>
+                      )}
+                      {project.status && (
+                        <div className="absolute top-4 right-4">
+                          <Badge
+                            variant="outline"
+                            className="bg-background/90 text-foreground capitalize"
+                          >
+                            {project.status}
+                          </Badge>
+                        </div>
+                      )}
                     </div>
-                  </div>
 
-                  <CardContent className="px-4">
-                    <div className="mb-3">
-                      <h3 className="text-lg font-semibold mb-2 group-hover:text-accent transition-colors">
-                        {project.name}
-                      </h3>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
-                        <div className="flex items-center gap-1">
-                          <FiMapPin size={14} />
-                          {project.location}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <FiCalendar size={14} />
-                          {project.year}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <FiStar size={14} className="text-yellow-500" />
-                          {project.rating}
+                    <CardContent className="px-4">
+                      <div className="mb-3">
+                        <h3 className="text-lg font-semibold mb-2 group-hover:text-accent transition-colors">
+                          {project.title}
+                        </h3>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
+                          {project.location && (
+                            <div className="flex items-center gap-1">
+                              <FiMapPin size={14} />
+                              {project.location}
+                            </div>
+                          )}
+                          {project.year && (
+                            <div className="flex items-center gap-1">
+                              <FiCalendar size={14} />
+                              {project.year}
+                            </div>
+                          )}
+                          {project.professionals_count !== undefined && project.professionals_count > 0 && (
+                            <div className="flex items-center gap-1">
+                              <FiStar size={14} className="text-yellow-500" />
+                              {project.professionals_count} professional{project.professionals_count !== 1 ? "s" : ""}
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </div>
 
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                      {project.description}
-                    </p>
+                      {project.description && (
+                        <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                          {project.description}
+                        </p>
+                      )}
 
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {project.badges.map((badge) => (
-                        <Badge
-                          key={badge}
-                          variant="outline"
-                          className="text-xs"
-                        >
-                          {badge}
-                        </Badge>
-                      ))}
-                    </div>
-
-                    <Button className=" w-full transition-all duration-300 hover:scale-105">
-                      <Link to={project.id.toString()}>View Details</Link>
+                    <Button className="w-full transition-all duration-300 hover:scale-105" asChild>
+                      <Link to={`/projects/${project.id}`}>View Details</Link>
                     </Button>
 
                     {/* <div className="flex items-center justify-between">
@@ -707,15 +594,39 @@ export default function ProjectsPage() {
                 </Card>
               ))}
             </div>
+            )}
 
             {/* No Results */}
-            {filteredProjects.length === 0 && (
+            {!isLoading && projects.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-muted-foreground mb-4">
                   No projects found matching your criteria.
                 </p>
                 <Button variant="outline" onClick={clearFilters}>
                   Clear Filters
+                </Button>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {!isLoading && totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-8">
+                <Button
+                  variant="outline"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
                 </Button>
               </div>
             )}

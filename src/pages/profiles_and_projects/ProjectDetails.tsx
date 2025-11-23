@@ -1,15 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-// import { useParams } from "next/navigation";
-// import { Button } from "@/components/ui/button";
-// import { Badge } from "@/components/ui/badge";
-// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-// import {
-//   Carousel,
-//   CarouselContent,
-//   CarouselItem,
-//   CarouselNext,
-//   CarouselPrevious,
-// } from "@/components/ui/carousel";
 import {
   FiStar,
   FiMapPin,
@@ -20,10 +9,11 @@ import {
   FiMail,
   FiArrowLeft,
   FiExternalLink,
+  FiUser,
 } from "react-icons/fi";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/src/components/ui/Button";
 import {
   Carousel,
@@ -40,160 +30,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/src/components/ui/Card";
+import { Skeleton } from "@/src/components/ui/Skeleton";
 import { TypographyH3 } from "@/src/components/ui/Typography";
 import { CTASection } from "@/src/components/ui/CtaSection";
+import { api, type Project } from "@/src/lib/api";
 
 gsap.registerPlugin(ScrollTrigger);
 
-interface Professional {
-  id: number;
-  name: string;
-  profession: string;
-  image: string;
-}
-
-interface ProjectDetails {
-  id: number;
-  name: string;
-  type: "Residential" | "Commercial" | "Public";
-  location: string;
-  coordinates: [number, number];
-  year: number;
-  status: "Completed" | "In Progress" | "Planning";
-  rating: number;
-  badges: string[];
-  overview: string;
-  highlights: string[];
-  heroImages: string[];
-  progressShots?: string[];
-  renders?: string[];
-  details: {
-    budget: string;
-    duration: string;
-    materials: string[];
-    style: string;
-    certifications?: string[];
-  };
-  professionals: Professional[];
-  testimonial?: {
-    client: string;
-    quote: string;
-  };
-  relatedProjects: number[];
-}
-
-const projectsData: Record<string, ProjectDetails> = {
-  "101": {
-    id: 101,
-    name: "EcoSmart Housing Estate",
-    type: "Residential",
-    location: "Freetown, Sierra Leone",
-    coordinates: [8.4657, -13.2317],
-    year: 2023,
-    status: "Completed",
-    rating: 4.9,
-    badges: ["Eco-friendly", "Affordable Housing", "Solar Powered"],
-    overview:
-      "A modern housing estate designed with sustainable materials and solar energy integration. This innovative project represents the future of affordable housing in Sierra Leone, combining contemporary design with traditional building techniques. The development features 50 family units, each equipped with solar panels, rainwater harvesting systems, and energy-efficient appliances.",
-    highlights: [
-      "Solar energy integration for 100% renewable power",
-      "Affordable construction model reducing costs by 30%",
-      "Green building materials sourced locally",
-      "Rainwater harvesting system for water conservation",
-      "Community spaces and recreational areas",
-      "Earthquake-resistant construction techniques",
-    ],
-    heroImages: [
-      "/modern-eco-friendly-housing-estate.jpg",
-      "/luxury-hilltop-apartments.jpg",
-      "/modern-sustainable-family-home-architecture.jpg",
-    ],
-    progressShots: [
-      "/modern-sustainable-family-home-architecture.jpg",
-      "/green-office-building-sustainable-architecture.jpg",
-    ],
-    renders: [
-      "/sustainable-school-building-architecture.jpg",
-      "/modern-health-center-building-architecture.jpg",
-    ],
-    details: {
-      budget: "$2.5M",
-      duration: "18 months",
-      materials: [
-        "Local timber",
-        "Recycled concrete",
-        "Solar panels",
-        "Bamboo",
-        "Clay bricks",
-      ],
-      style: "Contemporary Sustainable",
-      certifications: ["LEED Gold", "Green Building Council"],
-    },
-    professionals: [
-      {
-        id: 1,
-        name: "James Kamara",
-        profession: "Lead Architect",
-        image: "/professional-african-man-constructor.jpg",
-      },
-      {
-        id: 2,
-        name: "Fatima Sesay",
-        profession: "Structural Engineer",
-        image: "/professional-african-woman-architect.jpg",
-      },
-    ],
-    testimonial: {
-      client: "Ministry of Housing",
-      quote:
-        "This project has transformed affordable living in Freetown, setting a new standard for sustainable development in Sierra Leone.",
-    },
-    relatedProjects: [102, 103, 104],
-  },
-};
-
-const relatedProjectsData = [
-  {
-    id: 102,
-    name: "Sierra Leone Medical Center",
-    type: "Public",
-    image: "/modern-health-center-building-architecture.jpg",
-    location: "Bo",
-    year: 2022,
-    rating: 4.8,
-    badges: ["Healthcare", "Award-winning"],
-    description:
-      "State-of-the-art medical facility designed to serve the community with modern healthcare infrastructure.",
-  },
-  {
-    id: 103,
-    name: "Green Office Complex",
-    type: "Commercial",
-    image: "/green-office-building-sustainable-architecture.jpg",
-    location: "Freetown",
-    year: 2023,
-    rating: 4.7,
-    badges: ["LEED Certified", "Eco-friendly"],
-    description:
-      "Modern office complex featuring green building technologies and sustainable design principles.",
-  },
-  {
-    id: 104,
-    name: "Community School Project",
-    type: "Public",
-    image: "/sustainable-school-building-architecture.jpg",
-    location: "Kenema",
-    year: 2022,
-    rating: 4.9,
-    badges: ["Educational", "Community Impact"],
-    description:
-      "Educational facility designed to provide a quality learning environment for local community children.",
-  },
-];
-
 export default function ProjectDetailsPage() {
-  const params = useParams();
-  const [project, setProject] = useState<ProjectDetails | null>(null);
+  const params = useParams<{ project: string }>();
+  const navigate = useNavigate();
+  const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [heroApi, setHeroApi] = useState<CarouselApi>();
   const [progressApi, setProgressApi] = useState<CarouselApi>();
@@ -205,20 +52,29 @@ export default function ProjectDetailsPage() {
   useEffect(() => {
     const fetchProject = async () => {
       setLoading(true);
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      const projectId = params.id as string;
-      const projectData = projectsData[projectId];
-
-      if (projectData) {
+      try {
+        const projectParam = params.project as string;
+        if (!projectParam) {
+          setProject(null);
+          setLoading(false);
+          return;
+        }
+        // Try to convert to number if it's a numeric string, otherwise use as-is
+        const projectId = /^\d+$/.test(projectParam) ? parseInt(projectParam, 10) : projectParam;
+        const projectData = await api.getProject(projectId);
         setProject(projectData);
+      } catch (error) {
+        console.error("Failed to load project:", error);
+        setProject(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    fetchProject();
-  }, [params.id]);
+    if (params.project) {
+      fetchProject();
+    }
+  }, [params.project]);
 
   useEffect(() => {
     if (!project) return;
@@ -364,12 +220,12 @@ export default function ProjectDetailsPage() {
           }}
         >
           <CarouselContent>
-            {project.heroImages.map((image, index) => (
+            {((project.hero_images && project.hero_images.length > 0) ? project.hero_images : ["/placeholder.svg"]).map((image, index) => (
               <CarouselItem key={index}>
                 <div className="relative h-[90vh]">
                   <img
                     src={image || "/placeholder.svg"}
-                    alt={`${project.name} - Image ${index + 1}`}
+                    alt={`${project.title} - Image ${index + 1}`}
                     className="w-full h-full object-cover"
                     loading={index === 0 ? "eager" : "lazy"}
                   />
@@ -385,20 +241,29 @@ export default function ProjectDetailsPage() {
         {/* Project Name Overlay */}
         <div className="absolute bottom-4 left-8 text-white">
           <h1 className="text-4xl md:text-6xl font-bold mb-2">
-            {project.name}
+            {project.title}
           </h1>
           <div className="flex flex-wrap gap-2 mb-2">
-            {project.badges.map((badge) => (
+            {project.type && (
               <Badge
-                key={badge}
                 variant="secondary"
                 className="bg-white/20 text-white border-white/30"
               >
-                {badge}
+                {project.type}
               </Badge>
-            ))}
+            )}
+            {project.status && (
+              <Badge
+                variant="secondary"
+                className="bg-white/20 text-white border-white/30 capitalize"
+              >
+                {project.status}
+              </Badge>
+            )}
           </div>
-          <p className="text-xl opacity-90">{project.location}</p>
+          {project.location && (
+            <p className="text-xl opacity-90">{project.location}</p>
+          )}
         </div>
       </div>
 
@@ -411,31 +276,59 @@ export default function ProjectDetailsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <h2 className="text-3xl font-bold mb-6">Project Overview</h2>
-              <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                {project.overview}
-              </p>
+              {project.description && (
+                <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
+                  {project.description}
+                </p>
+              )}
 
-              <h3 className="text-xl font-semibold mb-4">Key Highlights</h3>
-              <ul className="space-y-2">
-                {project.highlights.map((highlight, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <div className="w-1 h-1 bg-accent rounded-full mt-1 flex-shrink-0" />
-                    <span className="text-muted-foreground">{highlight}</span>
-                  </li>
-                ))}
-              </ul>
+              {project.details && project.details.length > 0 && (
+                <>
+                  <h3 className="text-xl font-semibold mb-4">Technical Details</h3>
+                  <ul className="space-y-2">
+                    {project.details.map((detail, index) => {
+                      const key = typeof detail === 'object' && detail !== null && 'key' in detail ? detail.key : `Detail ${index + 1}`;
+                      const value = typeof detail === 'object' && detail !== null && 'value' in detail ? detail.value : String(detail);
+                      return (
+                        <li key={index} className="flex items-start gap-3">
+                          <div className="w-1 h-1 bg-accent rounded-full mt-1 flex-shrink-0" />
+                          <span className="text-muted-foreground">
+                            <strong>{key}:</strong> {value}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
+              )}
             </div>
 
-            {/* Testimonial */}
-            {project.testimonial && (
+            {/* Professionals */}
+            {project.professionals && project.professionals.length > 0 && (
               <Card className="h-fit">
+                <CardHeader>
+                  <CardTitle>Team</CardTitle>
+                </CardHeader>
                 <CardContent className="p-6">
-                  <blockquote className="text-lg italic mb-4">
-                    "{project.testimonial.quote}"
-                  </blockquote>
-                  <cite className="text-sm font-medium text-accent">
-                    — {project.testimonial.client}
-                  </cite>
+                  <div className="space-y-4">
+                    {project.professionals.map((professional) => (
+                      <div key={professional.id} className="flex items-center gap-3">
+                        {professional.photo && (
+                          <img
+                            src={professional.photo}
+                            alt={professional.name}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                        )}
+                        <div>
+                          <p className="font-medium">{professional.name}</p>
+                          <p className="text-sm text-muted-foreground capitalize">
+                            {professional.profession_type}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -446,49 +339,63 @@ export default function ProjectDetailsPage() {
         <div className="animate-section">
           <h2 className="text-3xl font-bold mb-8">Project Details</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-            <Card>
-              <CardContent className="p-4 text-center">
-                <FiCalendar className="w-4 h-4 text-accent mx-auto mb-3" />
-                <TypographyH3 className=" text-2xl font-semibold mb-1">
-                  Year
-                </TypographyH3>
-                <p className="text-muted-foreground">{project.year}</p>
-              </CardContent>
-            </Card>
+            {project.year && (
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <FiCalendar className="w-4 h-4 text-accent mx-auto mb-3" />
+                  <TypographyH3 className=" text-2xl font-semibold mb-1">
+                    Year
+                  </TypographyH3>
+                  <p className="text-muted-foreground">{project.year}</p>
+                </CardContent>
+              </Card>
+            )}
 
-            <Card>
-              <CardContent className="p-4 text-center">
-                <FiDollarSign className="w-4 h-4 text-accent mx-auto mb-3" />
-                <TypographyH3 className=" text-2xl font-semibold mb-1">
-                  Budget
-                </TypographyH3>
-                <p className="text-muted-foreground">
-                  {project.details.budget}
-                </p>
-              </CardContent>
-            </Card>
+            {project.budget && (
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <FiDollarSign className="w-4 h-4 text-accent mx-auto mb-3" />
+                  <TypographyH3 className=" text-2xl font-semibold mb-1">
+                    Budget
+                  </TypographyH3>
+                  <p className="text-muted-foreground">
+                    {new Intl.NumberFormat('en-US', {
+                      style: 'currency',
+                      currency: 'SLL',
+                      minimumFractionDigits: 0,
+                    }).format(project.budget)}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
-            <Card>
-              <CardContent className="p-4 text-center">
-                <FiClock className="w-4 h-4 text-accent mx-auto mb-3" />
-                <TypographyH3 className=" text-2xl font-semibold mb-1">
-                  Duration
-                </TypographyH3>
-                <p className="text-muted-foreground">
-                  {project.details.duration}
-                </p>
-              </CardContent>
-            </Card>
+            {project.duration && (
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <FiClock className="w-4 h-4 text-accent mx-auto mb-3" />
+                  <TypographyH3 className=" text-2xl font-semibold mb-1">
+                    Duration
+                  </TypographyH3>
+                  <p className="text-muted-foreground">
+                    {project.duration}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
-            <Card>
-              <CardContent className="p-4 text-center">
-                <FiStar className="w-4 h-4 text-accent mx-auto mb-3" />
-                <TypographyH3 className=" text-2xl font-semibold mb-1">
-                  Rating
-                </TypographyH3>
-                <p className="text-muted-foreground">{project.rating}/5.0</p>
-              </CardContent>
-            </Card>
+            {project.professionals_count !== undefined && (
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <FiUser className="w-4 h-4 text-accent mx-auto mb-3" />
+                  <TypographyH3 className=" text-2xl font-semibold mb-1">
+                    Team
+                  </TypographyH3>
+                  <p className="text-muted-foreground">
+                    {project.professionals_count} professional{project.professionals_count !== 1 ? "s" : ""}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Map Placeholder */}
@@ -519,7 +426,7 @@ export default function ProjectDetailsPage() {
           <h2 className="text-3xl font-bold">Project Gallery</h2>
 
           {/* Progress Shots */}
-          {project.progressShots && project.progressShots.length > 0 && (
+          {project.progress_images && project.progress_images.length > 0 && (
             <div className="md:flex flex-col items-end justify-end">
               <h3 className="text-xl font-semibold mb-4">
                 Construction Progress
@@ -539,7 +446,7 @@ export default function ProjectDetailsPage() {
                   }}
                 >
                   <CarouselContent>
-                    {project.progressShots.map((image, index) => (
+                    {project.progress_images.map((image, index) => (
                       <CarouselItem
                         key={index}
                         // className="md:basis-1/2 lg:basis-1/3"
@@ -563,7 +470,7 @@ export default function ProjectDetailsPage() {
           )}
 
           {/* Architectural Renders */}
-          {project.renders && project.renders.length > 0 && (
+          {project.render_images && project.render_images.length > 0 && (
             <div>
               <h3 className="text-xl font-semibold mb-4">
                 Architectural Renders
@@ -583,7 +490,7 @@ export default function ProjectDetailsPage() {
                   }}
                 >
                   <CarouselContent>
-                    {project.renders.map((image, index) => (
+                    {project.render_images.map((image, index) => (
                       <CarouselItem
                         key={index}
                         // className="md:basis-1/2 lg:basis-1/3"
@@ -608,89 +515,68 @@ export default function ProjectDetailsPage() {
         </div>
 
         {/* Associated Professionals */}
-        <div className="animate-section">
-          <h2 className="text-3xl font-bold mb-8">Project Team</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {project.professionals.map((professional) => (
-              <Card
-                key={professional.id}
-                className="py-4 rounded-none md:py-2 text-center hover:shadow-lg transition-shadow"
-              >
-                <CardContent className="md:p-2 p-4">
-                  <img
-                    src={professional.image || "/placeholder.svg"}
-                    alt={professional.name}
-                    className="w-20 h-20 rounded-full object-cover mx-auto mb-4"
-                    loading="lazy"
-                  />
-                  <TypographyH3 className="font-semibold text-lg">
-                    {professional.name}
-                  </TypographyH3>
-                  <p className="text-muted-foreground mb-2">
-                    {professional.profession}
-                  </p>
-                  <Link to={`/profiles/${professional.id}`}>
-                    <Button variant="outline" size="sm" className="w-[80%] h-6">
-                      View Profile
-                      <FiExternalLink className="ml-2 w-2 h-2" />
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
+        {project.professionals && project.professionals.length > 0 && (
+          <div className="animate-section">
+            <h2 className="text-3xl font-bold mb-8">Project Team</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {project.professionals.map((professional) => (
+                <Card
+                  key={professional.id}
+                  className="py-4 rounded-none md:py-2 text-center hover:shadow-lg transition-shadow"
+                >
+                  <CardContent className="md:p-2 p-4">
+                    <img
+                      src={professional.photo || "/placeholder.svg"}
+                      alt={professional.name}
+                      className="w-20 h-20 rounded-full object-cover mx-auto mb-4"
+                      loading="lazy"
+                    />
+                    <TypographyH3 className="font-semibold text-lg">
+                      {professional.name}
+                    </TypographyH3>
+                    <p className="text-muted-foreground mb-2 capitalize">
+                      {professional.profession_type}
+                    </p>
+                    {professional.role && (
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {professional.role}
+                      </p>
+                    )}
+                    <Link to={`/profiles/${professional.id}`}>
+                      <Button variant="outline" size="sm" className="w-[80%] h-6">
+                        View Profile
+                        <FiExternalLink className="ml-2 w-2 h-2" />
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Technical Details */}
-        <div className="animate-section">
-          <h2 className="text-3xl font-bold mb-8">Technical Specifications</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Materials Used</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {project.details.materials.map((material, index) => (
-                    <Badge key={index} variant="outline">
-                      {material}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Design Style</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-lg">{project.details.style}</p>
-              </CardContent>
-            </Card>
-
-            {project.details.certifications && (
-              <Card className="md:col-span-2">
-                <CardHeader>
-                  <CardTitle>Certifications & Awards</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {project.details.certifications.map((cert, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="bg-accent/10 text-accent"
-                      >
-                        {cert}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+        {project.details && project.details.length > 0 && (
+          <div className="animate-section">
+            <h2 className="text-3xl font-bold mb-8">Technical Specifications</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {project.details.map((detail, index) => {
+                const key = typeof detail === 'object' && detail !== null && 'key' in detail ? detail.key : `Specification ${index + 1}`;
+                const value = typeof detail === 'object' && detail !== null && 'value' in detail ? detail.value : String(detail);
+                return (
+                  <Card key={index}>
+                    <CardHeader>
+                      <CardTitle>{key}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-lg">{value}</p>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Call-to-Action Section */}
         <div className="animate-section">
@@ -730,8 +616,8 @@ export default function ProjectDetailsPage() {
           />
         </div>
 
-        {/* Related Projects */}
-        <div className="animate-section">
+        {/* Related Projects - Can be added later with API */}
+        {/* <div className="animate-section">
           <h2 className="text-3xl font-bold mb-8">Related Projects</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
             {relatedProjectsData.map((relatedProject) => (
@@ -813,7 +699,7 @@ export default function ProjectDetailsPage() {
               </Card>
             ))}
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Fixed Contact Button */}

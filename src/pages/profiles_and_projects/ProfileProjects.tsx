@@ -1,123 +1,20 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
-import { FiSearch, FiStar, FiMapPin, FiCalendar, FiMail } from "react-icons/fi";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { FiSearch, FiStar, FiMapPin, FiCalendar, FiMail, FiArrowLeft } from "react-icons/fi";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Button } from "@/src/components/ui/Button";
 import { Badge } from "@/src/components/ui/Badge";
 import { Input } from "@/src/components/ui/Input";
 import { Card, CardContent } from "@/src/components/ui/Card";
+import { Skeleton } from "@/src/components/ui/Skeleton";
+import { api, type Professional } from "@/src/lib/api";
 
 gsap.registerPlugin(ScrollTrigger);
 
-interface Professional {
-  id: number;
-  name: string;
-  profession: string;
-  location: string;
-  experience: string;
-  rating: number;
-  specialties: string[];
-  image: string;
-  contact: string;
-  phone?: string;
-  bio?: string;
-  completedProjects: number;
-}
-
-interface Project {
-  id: number;
-  name: string;
-  type: string;
-  location: string;
-  year: number;
-  rating: number;
-  image: string;
-  badges: string[];
-  description: string;
-  detailsLink: string;
-}
-
-// Mock data - in real app, this would come from API
-const mockData = {
-  "1": {
-    profile: {
-      id: 1,
-      name: "James Kamara",
-      profession: "Architect",
-      location: "Freetown, Sierra Leone",
-      experience: "10 years",
-      rating: 4.9,
-      specialties: [
-        "Eco-friendly Design",
-        "Affordable Housing",
-        "Commercial Buildings",
-      ],
-      image: "/professional-african-man-constructor.jpg",
-      contact: "mailto:james.kamara@example.com",
-      phone: "+232 76 123 456",
-      bio: "Passionate architect specializing in sustainable and affordable housing solutions for Sierra Leone.",
-      completedProjects: 24,
-    },
-    projects: [
-      {
-        id: 101,
-        name: "EcoSmart Housing Estate",
-        type: "Residential",
-        location: "Freetown",
-        year: 2023,
-        rating: 4.9,
-        image: "/modern-eco-friendly-housing-estate.jpg",
-        badges: ["Eco-friendly", "Affordable Housing"],
-        description:
-          "A modern housing estate designed with sustainable materials and solar energy integration for low-income families.",
-        detailsLink: "/projects/ecosmart-housing",
-      },
-      {
-        id: 104,
-        name: "Hilltop Apartments",
-        type: "Residential",
-        location: "Freetown",
-        year: 2022,
-        rating: 4.7,
-        image: "/luxury-hilltop-apartments.jpg",
-        badges: ["Luxury", "Sustainable Design"],
-        description:
-          "A luxury apartment complex overlooking the city, built with modern green technologies and energy-efficient systems.",
-        detailsLink: "/projects/hilltop-apartments",
-      },
-      {
-        id: 105,
-        name: "Community Health Center",
-        type: "Healthcare",
-        location: "Bo",
-        year: 2023,
-        rating: 4.8,
-        image: "/modern-community-health-center.jpg",
-        badges: ["Healthcare", "Community Impact"],
-        description:
-          "A state-of-the-art health facility designed to serve rural communities with modern medical equipment and accessibility features.",
-        detailsLink: "/projects/community-health-center",
-      },
-      {
-        id: 106,
-        name: "Green Office Complex",
-        type: "Commercial",
-        location: "Freetown",
-        year: 2021,
-        rating: 4.6,
-        image: "/green-office-building-complex.jpg",
-        badges: ["LEED Certified", "Commercial"],
-        description:
-          "An environmentally conscious office building featuring green roofs, natural lighting, and energy-efficient systems.",
-        detailsLink: "/projects/green-office-complex",
-      },
-    ],
-  },
-};
-
 export default function ProfileProjectsPage() {
   const params = useParams();
+  const navigate = useNavigate();
   const profileId = params.id as string;
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -125,59 +22,96 @@ export default function ProfileProjectsPage() {
   const [selectedYear, setSelectedYear] = useState("All");
   const [selectedLocation, setSelectedLocation] = useState("All");
   const [selectedRating, setSelectedRating] = useState("All");
-  const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
+  const [filteredProjects, setFilteredProjects] = useState<any[]>([]);
+
+  const [professional, setProfessional] = useState<Professional | null>(null);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(true);
 
   const profilePanelRef = useRef<HTMLDivElement>(null);
   const projectsGridRef = useRef<HTMLDivElement>(null);
 
-  // Get data for this profile
-  const data = mockData[profileId as keyof typeof mockData];
-  const profile = data?.profile;
-  const projects = data?.projects || [];
+  // Load professional and projects
+  useEffect(() => {
+    if (profileId) {
+      loadProfessional();
+      loadProjects();
+    }
+  }, [profileId]);
+
+  const loadProfessional = async () => {
+    setIsLoading(true);
+    try {
+      const data = await api.getProfessional(profileId);
+      setProfessional(data);
+    } catch (error) {
+      console.error("Failed to load professional:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadProjects = async () => {
+    setIsLoadingProjects(true);
+    try {
+      const response = await api.getProfessionalProjects(profileId);
+      setProjects(response.data);
+    } catch (error) {
+      console.error("Failed to load projects:", error);
+      setProjects([]);
+    } finally {
+      setIsLoadingProjects(false);
+    }
+  };
 
   useEffect(() => {
-    if (!profile) return;
+    if (!professional) return;
 
     // GSAP animations
     const ctx = gsap.context(() => {
       // Profile panel slide in animation
-      gsap.fromTo(
-        profilePanelRef.current,
-        { x: -100, opacity: 0 },
-        {
-          x: 0,
-          opacity: 1,
-          duration: 0.8,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: profilePanelRef.current,
-            start: "top 80%",
-            once: true,
-          },
-        }
-      );
+      if (profilePanelRef.current) {
+        gsap.fromTo(
+          profilePanelRef.current,
+          { x: -100, opacity: 0 },
+          {
+            x: 0,
+            opacity: 1,
+            duration: 0.8,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: profilePanelRef.current,
+              start: "top 80%",
+              once: true,
+            },
+          }
+        );
+      }
 
       // Project cards fade in
-      gsap.fromTo(
-        ".project-card",
-        { y: 30, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.6,
-          stagger: 0.1,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: projectsGridRef.current,
-            start: "top 80%",
-            once: true,
-          },
-        }
-      );
+      if (projectsGridRef.current) {
+        gsap.fromTo(
+          ".project-card",
+          { y: 30, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.6,
+            stagger: 0.1,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: projectsGridRef.current,
+              start: "top 80%",
+              once: true,
+            },
+          }
+        );
+      }
     });
 
     return () => ctx.revert();
-  }, [profile]);
+  }, [professional]);
 
   useEffect(() => {
     let filtered = projects;
@@ -185,8 +119,8 @@ export default function ProfileProjectsPage() {
     if (searchTerm) {
       filtered = filtered.filter(
         (project) =>
-          project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          project.description.toLowerCase().includes(searchTerm.toLowerCase())
+          project.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          project.description?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -196,7 +130,7 @@ export default function ProfileProjectsPage() {
 
     if (selectedYear !== "All") {
       filtered = filtered.filter(
-        (project) => project.year.toString() === selectedYear
+        (project) => project.year?.toString() === selectedYear
       );
     }
 
@@ -204,11 +138,6 @@ export default function ProfileProjectsPage() {
       filtered = filtered.filter(
         (project) => project.location === selectedLocation
       );
-    }
-
-    if (selectedRating !== "All") {
-      const rating = Number.parseFloat(selectedRating);
-      filtered = filtered.filter((project) => project.rating >= rating);
     }
 
     setFilteredProjects(filtered);
@@ -221,14 +150,26 @@ export default function ProfileProjectsPage() {
     projects,
   ]);
 
-  if (!profile) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Skeleton className="h-8 w-48 mx-auto mb-4" />
+          <Skeleton className="h-4 w-32 mx-auto" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!professional) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Profile Not Found</h1>
-          <Link to="/profiles">
-            <Button>Back to Profiles</Button>
-          </Link>
+          <Button onClick={() => navigate("/profiles")}>
+            <FiArrowLeft className="mr-2" />
+            Back to Profiles
+          </Button>
         </div>
       </div>
     );
@@ -236,19 +177,18 @@ export default function ProfileProjectsPage() {
 
   const projectTypes = [
     "All",
-    ...Array.from(new Set(projects.map((p) => p.type))),
+    ...Array.from(new Set(projects.map((p) => p.type).filter(Boolean))),
   ];
   const projectYears = [
     "All",
-    ...Array.from(new Set(projects.map((p) => p.year.toString())))
+    ...Array.from(new Set(projects.map((p) => p.year?.toString()).filter(Boolean)))
       .sort()
       .reverse(),
   ];
   const projectLocations = [
     "All",
-    ...Array.from(new Set(projects.map((p) => p.location))),
+    ...Array.from(new Set(projects.map((p) => p.location).filter(Boolean))),
   ];
-  const ratingOptions = ["All", "4.5", "4.0", "3.5"];
 
   return (
     <div className="min-h-screen bg-background">
@@ -272,7 +212,7 @@ export default function ProfileProjectsPage() {
           {/* Projects Header */}
           <div className="mb-2">
             <h2 className="text-3xl font-bold mb-8">
-              Projects by {profile.name}
+              Projects by {professional.name}
             </h2>
           </div>
         </div>
@@ -289,8 +229,8 @@ export default function ProfileProjectsPage() {
               <div className="flex justify-center">
                 <div className="relative">
                   <img
-                    src={profile.image || "/placeholder.svg"}
-                    alt={profile.name}
+                    src={professional.photo || "/placeholder.svg"}
+                    alt={professional.name}
                     width={120}
                     height={120}
                     className="rounded-full border-4 border-red-500 shadow-lg"
@@ -302,48 +242,73 @@ export default function ProfileProjectsPage() {
             {/* Profile Details */}
             <div className="pl-16 pr-4 scrollbar-hide pb-4 pt-6 h-full overflow-y-auto ">
               <h1 className="text-2xl font-bold mb-2 text-center">
-                {profile.name}
+                {professional.name}
               </h1>
-              <p className="text-gray-300 text-center mb-4">
-                {profile.profession}
+              {professional.headline && (
+                <p className="text-gray-300 text-center mb-1 text-sm">
+                  {professional.headline}
+                </p>
+              )}
+              <p className="text-gray-300 text-center mb-4 capitalize">
+                {professional.profession_type}
               </p>
 
               <div className="space-y-2 mb-6">
-                <div className="flex items-center gap-2 text-sm">
-                  <FiMapPin className="text-green-500" />
-                  <span>{profile.location}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <FiCalendar className="text-green-500" />
-                  <span>{profile.experience} experience</span>
-                </div>
+                {professional.location && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <FiMapPin className="text-green-500" />
+                    <span>{professional.location}</span>
+                  </div>
+                )}
+                {professional.experience_years !== undefined && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <FiCalendar className="text-green-500" />
+                    <span>{professional.experience_years} years experience</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 text-sm">
                   <FiStar className="text-yellow-500" />
                   <span>
-                    {profile.rating} ({profile.completedProjects} projects)
+                    {professional.rating?.toFixed(1) || "N/A"} ({professional.projects_count || 0} projects)
                   </span>
                 </div>
               </div>
 
               {/* Specialties */}
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold mb-2">Specialties</h3>
-                <div className="flex flex-wrap gap-1">
-                  {profile.specialties.map((specialty, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {specialty}
-                    </Badge>
-                  ))}
+              {professional.specialties && professional.specialties.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold mb-2">Specialties</h3>
+                  <div className="flex flex-wrap gap-1">
+                    {professional.specialties.map((specialty, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs">
+                        {specialty}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Bio */}
+              {professional.bio && (
+                <div className="mb-6">
+                  <p className="text-sm text-gray-300 line-clamp-4">{professional.bio}</p>
+                </div>
+              )}
 
               {/* Contact Button */}
-              <div className="mb-8">
-                <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
-                  <FiMail className="mr-2 h-4 w-4" />
-                  Contact {profile.name.split(" ")[0]}
-                </Button>
-              </div>
+              {professional.contact_email && (
+                <div className="mb-8">
+                  <Button 
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    asChild
+                  >
+                    <a href={`mailto:${professional.contact_email}`}>
+                      <FiMail className="mr-2 h-4 w-4" />
+                      Contact {professional.name.split(" ")[0]}
+                    </a>
+                  </Button>
+                </div>
+              )}
 
               {/* Filters */}
               <div className="space-y-4">
@@ -400,17 +365,6 @@ export default function ProfileProjectsPage() {
                   <label className="block text-sm font-medium mb-1">
                     Min Rating
                   </label>
-                  <select
-                    value={selectedRating}
-                    onChange={(e) => setSelectedRating(e.target.value)}
-                    className="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white text-sm"
-                  >
-                    {ratingOptions.map((rating) => (
-                      <option key={rating} value={rating}>
-                        {rating === "All" ? "All Ratings" : `${rating}+ Stars`}
-                      </option>
-                    ))}
-                  </select>
                 </div>
 
                 <Button
@@ -466,77 +420,92 @@ export default function ProfileProjectsPage() {
           </div>
 
           {/* Projects Grid */}
-          <div
-            ref={projectsGridRef}
-            // className="grid grid-cols-1 md:grid-cols-2 gap-4"
-            className="grid grid-cols-1 lg:grid-cols-2 gap-2"
-          >
-            {filteredProjects.map((project) => (
-              <Card
-                key={project.id}
-                className="project-card group rounded-none overflow-hidden hover:shadow-lg transition-all duration-300"
-              >
-                <div className="relative overflow-hidden">
-                  <img
-                    src={project.image || "/placeholder.svg"}
-                    alt={project.name}
-                    className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <div className="absolute top-4 left-4">
-                    <Badge
-                      variant="secondary"
-                      className="bg-background/90 text-foreground"
-                    >
-                      {project.type}
-                    </Badge>
+          {isLoadingProjects ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+              {[...Array(4)].map((_, i) => (
+                <Card key={i} className="rounded-none">
+                  <Skeleton className="w-full h-48" />
+                  <CardContent className="px-4">
+                    <Skeleton className="h-6 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-full mb-4" />
+                    <Skeleton className="h-10 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div
+              ref={projectsGridRef}
+              className="grid grid-cols-1 lg:grid-cols-2 gap-2"
+            >
+              {filteredProjects.map((project) => (
+                <Card
+                  key={project.id}
+                  className="project-card group rounded-none overflow-hidden hover:shadow-lg transition-all duration-300"
+                >
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={project.hero_images?.[0] || "/placeholder.svg"}
+                      alt={project.title}
+                      className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    {project.type && (
+                      <div className="absolute top-4 left-4">
+                        <Badge
+                          variant="secondary"
+                          className="bg-background/90 text-foreground"
+                        >
+                          {project.type}
+                        </Badge>
+                      </div>
+                    )}
                   </div>
-                </div>
 
-                <CardContent className="px-4">
-                  <div className="mb-3">
-                    <h3 className="text-lg font-semibold mb-2 group-hover:text-accent transition-colors">
-                      {project.name}
-                    </h3>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
-                      <div className="flex items-center gap-1">
-                        <FiMapPin size={14} />
-                        {project.location}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <FiCalendar size={14} />
-                        {project.year}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <FiStar size={14} className="text-yellow-500" />
-                        {project.rating}
+                  <CardContent className="px-4">
+                    <div className="mb-3">
+                      <h3 className="text-lg font-semibold mb-2 group-hover:text-accent transition-colors">
+                        {project.title}
+                      </h3>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
+                        {project.location && (
+                          <div className="flex items-center gap-1">
+                            <FiMapPin size={14} />
+                            {project.location}
+                          </div>
+                        )}
+                        {project.year && (
+                          <div className="flex items-center gap-1">
+                            <FiCalendar size={14} />
+                            {project.year}
+                          </div>
+                        )}
+                        {project.status && (
+                          <Badge variant="outline" className="text-xs">
+                            {project.status}
+                          </Badge>
+                        )}
                       </div>
                     </div>
-                  </div>
 
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                    {project.description}
-                  </p>
+                    {project.description && (
+                      <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                        {project.description}
+                      </p>
+                    )}
 
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {project.badges.map((badge, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {badge}
-                      </Badge>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <Button
-                      className="w-full transition-all duration-300 hover:scale-105"
-                      asChild
-                    >
-                      <Link to={project.detailsLink}>View Details</Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    <div className="flex items-center justify-between">
+                      <Button
+                        className="w-full transition-all duration-300 hover:scale-105"
+                        asChild
+                      >
+                        <Link to={`/projects/${project.id}`}>View Details</Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
 
           {filteredProjects.length === 0 && (
             <div className="text-center py-12">
@@ -551,38 +520,47 @@ export default function ProfileProjectsPage() {
       {/* Mobile Layout */}
       <div className="lg:hidden">
         {/* Profile Header */}
-        <div className="bg-black text-white p-6">
-          <div className="flex flex-col items-center text-center">
-            <img
-              src={profile.image || "/placeholder.svg"}
-              alt={profile.name}
-              width={100}
-              height={100}
-              className="rounded-full border-4 border-white shadow-lg mb-4"
-            />
-            <h1 className="text-2xl font-bold mb-1">{profile.name}</h1>
-            <p className="text-gray-300 mb-4">{profile.profession}</p>
+        {professional && (
+          <div className="bg-black text-white p-6">
+            <div className="flex flex-col items-center text-center">
+              <img
+                src={professional.photo || "/placeholder.svg"}
+                alt={professional.name}
+                width={100}
+                height={100}
+                className="rounded-full border-4 border-white shadow-lg mb-4"
+              />
+              <h1 className="text-2xl font-bold mb-1">{professional.name}</h1>
+              {professional.headline && (
+                <p className="text-gray-300 text-sm mb-1">{professional.headline}</p>
+              )}
+              <p className="text-gray-300 mb-4 capitalize">{professional.profession_type}</p>
 
-            <div className="flex flex-wrap justify-center gap-4 text-sm mb-4">
-              <div className="flex items-center gap-1">
-                <FiMapPin className="text-green-500" />
-                <span>{profile.location}</span>
+              <div className="flex flex-wrap justify-center gap-4 text-sm mb-4">
+                {professional.location && (
+                  <div className="flex items-center gap-1">
+                    <FiMapPin className="text-green-500" />
+                    <span>{professional.location}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1">
+                  <FiStar className="text-yellow-500" />
+                  <span>{professional.rating?.toFixed(1) || "N/A"}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <FiStar className="text-yellow-500" />
-                <span>{profile.rating}</span>
-              </div>
-            </div>
 
-            <div className="flex flex-wrap justify-center gap-1 mb-4">
-              {profile.specialties.map((specialty, index) => (
-                <Badge key={index} variant="secondary" className="text-xs">
-                  {specialty}
-                </Badge>
-              ))}
+              {professional.specialties && professional.specialties.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-1 mb-4">
+                  {professional.specialties.map((specialty, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      {specialty}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-        </div>
+        )}
 
         {/* Search and Filters */}
         <div className="p-6 bg-gray-50">
@@ -655,57 +633,58 @@ export default function ProfileProjectsPage() {
               >
                 <div className="relative overflow-hidden">
                   <img
-                    src={project.image || "/placeholder.svg"}
-                    alt={project.name}
+                    src={project.hero_images?.[0] || "/placeholder.svg"}
+                    alt={project.title}
                     className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
                   />
-                  <div className="absolute top-4 left-4">
-                    <Badge
-                      variant="secondary"
-                      className="bg-background/90 text-foreground"
-                    >
-                      {project.type}
-                    </Badge>
-                  </div>
+                  {project.type && (
+                    <div className="absolute top-4 left-4">
+                      <Badge
+                        variant="secondary"
+                        className="bg-background/90 text-foreground"
+                      >
+                        {project.type}
+                      </Badge>
+                    </div>
+                  )}
                 </div>
                 <CardContent className="px-4 pb-4">
                   <div className="mb-3">
                     <h3 className="text-lg font-semibold mb-2 group-hover:text-accent transition-colors">
-                      {project.name}
+                      {project.title}
                     </h3>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
-                      <div className="flex items-center gap-1">
-                        <FiMapPin size={14} />
-                        {project.location}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <FiCalendar size={14} />
-                        {project.year}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <FiStar size={14} className="text-yellow-500" />
-                        {project.rating}
-                      </div>
+                      {project.location && (
+                        <div className="flex items-center gap-1">
+                          <FiMapPin size={14} />
+                          {project.location}
+                        </div>
+                      )}
+                      {project.year && (
+                        <div className="flex items-center gap-1">
+                          <FiCalendar size={14} />
+                          {project.year}
+                        </div>
+                      )}
+                      {project.status && (
+                        <Badge variant="outline" className="text-xs">
+                          {project.status}
+                        </Badge>
+                      )}
                     </div>
                   </div>
 
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                    {project.description}
-                  </p>
-
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {project.badges.map((badge, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {badge}
-                      </Badge>
-                    ))}
-                  </div>
+                  {project.description && (
+                    <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                      {project.description}
+                    </p>
+                  )}
 
                   <Button
                     className="w-full transition-all duration-300 hover:scale-105"
                     asChild
                   >
-                    <Link to={project.detailsLink}>View Details</Link>
+                    <Link to={`/projects/${project.id}`}>View Details</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -722,17 +701,19 @@ export default function ProfileProjectsPage() {
         </div>
 
         {/* Floating Contact Button */}
-        <div className="fixed bottom-6 right-6 z-50">
-          <Button
-            size="lg"
-            className="rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg"
-            asChild
-          >
-            <a href={profile.contact}>
-              <FiMail className="h-5 w-5" />
-            </a>
-          </Button>
-        </div>
+        {professional?.contact_email && (
+          <div className="fixed bottom-6 right-6 z-50">
+            <Button
+              size="lg"
+              className="rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg"
+              asChild
+            >
+              <a href={`mailto:${professional.contact_email}`}>
+                <FiMail className="h-5 w-5" />
+              </a>
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

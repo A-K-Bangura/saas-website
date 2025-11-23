@@ -12,14 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/components/ui/Select";
+import { Skeleton } from "@/src/components/ui/Skeleton";
 import { useGSAPFadeIn } from "@/src/hooks/use-gsap-fade-in";
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-// import { Button } from "@/components/ui/button"
-// import { Input } from "@/components/ui/input"
-// import { Badge } from "@/components/ui/badge"
-// import { Card, CardContent } from "@/components/ui/card"
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { api, type Professional } from "@/src/lib/api";
 import {
   FiSearch,
   FiFilter,
@@ -30,126 +27,6 @@ import {
   FiMail,
   FiX,
 } from "react-icons/fi";
-// import { useGSAPFadeIn } from "@/hooks/use-gsap-fade-in"
-
-interface Professional {
-  id: string;
-  name: string;
-  profession: "Constructor" | "Architect";
-  experience: number;
-  location: string;
-  rating: number;
-  projectTypes: string[];
-  bio: string;
-  specialties: string[];
-  image: string;
-  completedProjects: number;
-}
-
-const mockProfessionals: Professional[] = [
-  {
-    id: "1",
-    name: "Aminata Kamara",
-    profession: "Architect",
-    experience: 8,
-    location: "Freetown",
-    rating: 4.9,
-    projectTypes: ["Residential", "Commercial"],
-    bio: "Passionate architect specializing in sustainable design and modern African architecture. Committed to creating spaces that blend tradition with innovation.",
-    specialties: [
-      "Sustainable Design",
-      "Modern Architecture",
-      "Urban Planning",
-    ],
-    image: "/professional-african-woman-architect.jpg",
-    completedProjects: 45,
-  },
-  {
-    id: "2",
-    name: "Mohamed Sesay",
-    profession: "Constructor",
-    experience: 12,
-    location: "Bo",
-    rating: 4.8,
-    projectTypes: ["Residential", "Infrastructure"],
-    bio: "Experienced constructor with expertise in sustainable building practices and local materials. Known for delivering quality projects on time and within budget.",
-    specialties: [
-      "Project Management",
-      "Sustainable Construction",
-      "Local Materials",
-    ],
-    image: "/professional-african-man-constructor.jpg",
-    completedProjects: 78,
-  },
-  {
-    id: "3",
-    name: "Fatima Bangura",
-    profession: "Architect",
-    experience: 6,
-    location: "Kenema",
-    rating: 4.7,
-    projectTypes: ["Educational", "Healthcare"],
-    bio: "Innovative architect focused on community-centered design and accessible architecture. Specializes in educational and healthcare facilities.",
-    specialties: [
-      "Community Design",
-      "Healthcare Architecture",
-      "Accessibility",
-    ],
-    image: "/professional-african-woman-architect-2.jpg",
-    completedProjects: 32,
-  },
-  {
-    id: "4",
-    name: "Ibrahim Koroma",
-    profession: "Constructor",
-    experience: 15,
-    location: "Makeni",
-    rating: 4.9,
-    projectTypes: ["Commercial", "Industrial"],
-    bio: "Senior constructor with extensive experience in large-scale commercial and industrial projects. Expert in modern construction techniques and safety standards.",
-    specialties: [
-      "Commercial Construction",
-      "Safety Management",
-      "Quality Control",
-    ],
-    image: "/professional-african-man-constructor-2.jpg",
-    completedProjects: 95,
-  },
-  {
-    id: "5",
-    name: "Adama Turay",
-    profession: "Architect",
-    experience: 10,
-    location: "Freetown",
-    rating: 4.8,
-    projectTypes: ["Residential", "Hospitality"],
-    bio: "Creative architect with a passion for luxury residential and hospitality design. Known for creating stunning spaces that reflect Sierra Leone's natural beauty.",
-    specialties: [
-      "Luxury Design",
-      "Hospitality Architecture",
-      "Interior Design",
-    ],
-    image: "/professional-african-woman-architect-3.jpg",
-    completedProjects: 58,
-  },
-  {
-    id: "6",
-    name: "Sahr Conteh",
-    profession: "Constructor",
-    experience: 9,
-    location: "Port Loko",
-    rating: 4.6,
-    projectTypes: ["Residential", "Agricultural"],
-    bio: "Dedicated constructor specializing in rural development and agricultural infrastructure. Committed to improving living standards in rural communities.",
-    specialties: [
-      "Rural Development",
-      "Agricultural Buildings",
-      "Community Projects",
-    ],
-    image: "/professional-african-man-constructor-3.jpg",
-    completedProjects: 67,
-  },
-];
 
 export default function ProfilesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -161,12 +38,15 @@ export default function ProfilesPage() {
   const selectedExperience = searchParams.get("experience") || "all";
   const selectedLocation = searchParams.get("location") || "all";
   const selectedRating = searchParams.get("rating") || "all";
-  const selectedProjectType = searchParams.get("projectType") || "all";
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
 
-  const [filteredProfessionals, setFilteredProfessionals] =
-    useState<Professional[]>(mockProfessionals);
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [locations, setLocations] = useState<string[]>([]);
 
   const fadeInRef = useGSAPFadeIn();
 
@@ -178,65 +58,73 @@ export default function ProfilesPage() {
     } else {
       params.set(key, value);
     }
+    params.delete("page"); // Reset to page 1 when filters change
     setSearchParams(params);
   };
 
-  // Filter professionals based on search and filters
+  // Load professionals from API
   useEffect(() => {
-    const filtered = mockProfessionals.filter((professional) => {
-      const matchesSearch =
-        professional.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        professional.profession
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        professional.specialties.some((specialty) =>
-          specialty.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+    loadProfessionals();
+  }, [searchTerm, selectedProfession, selectedExperience, selectedLocation, selectedRating, currentPage]);
 
-      const matchesProfession =
-        selectedProfession === "all" ||
-        professional.profession === selectedProfession;
+  const loadProfessionals = async () => {
+    setIsLoading(true);
+    try {
+      // Map profession filter
+      let professionType: string | undefined;
+      if (selectedProfession !== "all") {
+        professionType = selectedProfession.toLowerCase();
+      }
 
-      const matchesExperience =
-        selectedExperience === "all" ||
-        (selectedExperience === "0-5" && professional.experience <= 5) ||
-        (selectedExperience === "6-10" &&
-          professional.experience >= 6 &&
-          professional.experience <= 10) ||
-        (selectedExperience === "11+" && professional.experience >= 11);
+      // Map experience filter to min_experience
+      let minExperience: number | undefined;
+      if (selectedExperience !== "all") {
+        if (selectedExperience === "0-5") {
+          minExperience = 0;
+        } else if (selectedExperience === "6-10") {
+          minExperience = 6;
+        } else if (selectedExperience === "11+") {
+          minExperience = 11;
+        }
+      }
 
-      const matchesLocation =
-        selectedLocation === "all" ||
-        professional.location === selectedLocation;
+      // Map rating filter to min_rating
+      let minRating: number | undefined;
+      if (selectedRating !== "all") {
+        if (selectedRating === "4+") {
+          minRating = 4;
+        } else if (selectedRating === "4.5+") {
+          minRating = 4.5;
+        }
+      }
 
-      const matchesRating =
-        selectedRating === "all" ||
-        (selectedRating === "4+" && professional.rating >= 4) ||
-        (selectedRating === "4.5+" && professional.rating >= 4.5);
+      const response = await api.getProfessionals({
+        search: searchTerm || undefined,
+        profession_type: professionType,
+        location: selectedLocation !== "all" ? selectedLocation : undefined,
+        min_rating: minRating,
+        min_experience: minExperience,
+        status: "active",
+        page: currentPage,
+        per_page: 12,
+      });
 
-      const matchesProjectType =
-        selectedProjectType === "all" ||
-        professional.projectTypes.includes(selectedProjectType);
+      setProfessionals(response.data);
+      setTotalPages(response.meta.last_page);
+      setTotalCount(response.meta.total);
 
-      return (
-        matchesSearch &&
-        matchesProfession &&
-        matchesExperience &&
-        matchesLocation &&
-        matchesRating &&
-        matchesProjectType
-      );
-    });
-
-    setFilteredProfessionals(filtered);
-  }, [
-    searchTerm,
-    selectedProfession,
-    selectedExperience,
-    selectedLocation,
-    selectedRating,
-    selectedProjectType,
-  ]);
+      // Extract unique locations
+      const uniqueLocations = Array.from(
+        new Set(response.data.map((p) => p.location).filter(Boolean))
+      ) as string[];
+      setLocations(uniqueLocations);
+    } catch (error) {
+      console.error("Failed to load professionals:", error);
+      setProfessionals([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const clearFilters = () => {
     setSearchParams({});
@@ -247,15 +135,14 @@ export default function ProfilesPage() {
     selectedProfession !== "all" ||
     selectedExperience !== "all" ||
     selectedLocation !== "all" ||
-    selectedRating !== "all" ||
-    selectedProjectType !== "all";
+    selectedRating !== "all";
 
-  const locations = Array.from(
-    new Set(mockProfessionals.map((p) => p.location))
-  );
-  const projectTypes = Array.from(
-    new Set(mockProfessionals.flatMap((p) => p.projectTypes))
-  );
+  const handlePageChange = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", page.toString());
+    setSearchParams(params);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -293,10 +180,10 @@ export default function ProfilesPage() {
       </section>
 
       <div className="container mx-auto px-2 max-w-7xl py-4">
-        <div className="flex flex-col lg:flex-row gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Desktop Filter Panel */}
-          <div className="hidden lg:block w-70 flex-shrink-0">
-            <div className="sticky top-24">
+          <div className="hidden lg:block lg:col-span-3">
+            <div className="sticky top-16 self-start max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-thin">
               <Card className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold">Filters</h3>
@@ -329,8 +216,11 @@ export default function ProfilesPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Professions</SelectItem>
-                        <SelectItem value="Architect">Architect</SelectItem>
-                        <SelectItem value="Constructor">Constructor</SelectItem>
+                        <SelectItem value="architect">Architect</SelectItem>
+                        <SelectItem value="constructor">Constructor</SelectItem>
+                        <SelectItem value="electrician">Electrician</SelectItem>
+                        <SelectItem value="surveyor">Surveyor</SelectItem>
+                        <SelectItem value="plumber">Plumber</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -407,37 +297,13 @@ export default function ProfilesPage() {
                     </Select>
                   </div>
 
-                  {/* Project Type Filter */}
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">
-                      Project Type
-                    </label>
-                    <Select
-                      value={selectedProjectType}
-                      onValueChange={(value) =>
-                        updateSearchParams("projectType", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="All Project Types" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Project Types</SelectItem>
-                        {projectTypes.map((type) => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
               </Card>
             </div>
           </div>
 
           {/* Main Content */}
-          <div className="flex-1">
+          <div className="lg:col-span-9">
             {/* Mobile Search and Filter Toggle */}
             <div className="lg:hidden mb-6 space-y-4">
               <div className="relative">
@@ -504,10 +370,11 @@ export default function ProfilesPage() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">All Professions</SelectItem>
-                            <SelectItem value="Architect">Architect</SelectItem>
-                            <SelectItem value="Constructor">
-                              Constructor
-                            </SelectItem>
+                            <SelectItem value="architect">Architect</SelectItem>
+                            <SelectItem value="constructor">Constructor</SelectItem>
+                            <SelectItem value="electrician">Electrician</SelectItem>
+                            <SelectItem value="surveyor">Surveyor</SelectItem>
+                            <SelectItem value="plumber">Plumber</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -579,29 +446,6 @@ export default function ProfilesPage() {
                         </Select>
                       </div>
 
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">
-                          Project Type
-                        </label>
-                        <Select
-                          value={selectedProjectType}
-                          onValueChange={(value) =>
-                            updateSearchParams("projectType", value)
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="All Types" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Types</SelectItem>
-                            {projectTypes.map((type) => (
-                              <SelectItem key={type} value={type}>
-                                {type}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
                     </div>
                   </div>
                 </Card>
@@ -628,14 +472,33 @@ export default function ProfilesPage() {
                 </div>
               </div>
               <p className="text-muted-foreground">
-                {filteredProfessionals.length} professional
-                {filteredProfessionals.length !== 1 ? "s" : ""} found
+                {totalCount} professional{totalCount !== 1 ? "s" : ""} found
               </p>
             </div>
 
             {/* Profiles Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {filteredProfessionals.map((professional, index) => (
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {[...Array(6)].map((_, i) => (
+                  <Card key={i} className="rounded-none">
+                    <CardContent className="px-4 py-2">
+                      <div className="flex items-start gap-6 mb-4">
+                        <Skeleton className="w-12 h-12 rounded-full" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-5 w-3/4" />
+                          <Skeleton className="h-4 w-1/2" />
+                          <Skeleton className="h-4 w-2/3" />
+                        </div>
+                      </div>
+                      <Skeleton className="h-16 w-full mb-4" />
+                      <Skeleton className="h-6 w-full" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {professionals.map((professional, index) => (
                 <Card
                   key={professional.id}
                   className="group rounded-none hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
@@ -645,13 +508,15 @@ export default function ProfilesPage() {
                       {/* Profile Image */}
                       <div className="relative">
                         <img
-                          src={professional.image || "/placeholder.svg"}
+                          src={professional.photo || "/placeholder.svg"}
                           alt={professional.name}
                           className="w-12 h-12 rounded-full object-cover border-2 border-muted"
                         />
-                        <div className="absolute -bottom-1 -right-1 bg-accent text-white text-xs px-2 py-0.5 rounded-full">
-                          {professional.rating}
-                        </div>
+                        {professional.rating !== undefined && professional.rating > 0 && (
+                          <div className="absolute -bottom-1 -right-1 bg-accent text-white text-xs px-2 py-0.5 rounded-full">
+                            {professional.rating.toFixed(1)}
+                          </div>
+                        )}
                       </div>
 
                       {/* Basic Info */}
@@ -659,53 +524,72 @@ export default function ProfilesPage() {
                         <h3 className="font-semibold text-lg text-foreground mb-1 truncate">
                           {professional.name}
                         </h3>
+                        {professional.headline && (
+                          <p className="text-xs text-muted-foreground mb-1 line-clamp-1">
+                            {professional.headline}
+                          </p>
+                        )}
                         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                           <FiUser size={14} />
-                          <span>{professional.profession}</span>
+                          <span className="capitalize">{professional.profession_type}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                          <FiMapPin size={14} />
-                          <span>{professional.location}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <FiStar size={14} />
-                          <span>
-                            {professional.experience} years experience
-                          </span>
-                        </div>
+                        {professional.location && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                            <FiMapPin size={14} />
+                            <span>{professional.location}</span>
+                          </div>
+                        )}
+                        {professional.experience_years !== undefined && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <FiStar size={14} />
+                            <span>
+                              {professional.experience_years} years experience
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
                     {/* Bio */}
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                      {professional.bio}
-                    </p>
+                    {professional.bio && (
+                      <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                        {professional.bio}
+                      </p>
+                    )}
 
                     {/* Specialties */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {professional.specialties.slice(0, 3).map((specialty) => (
-                        <Badge
-                          key={specialty}
-                          variant="secondary"
-                          className="text-[.5em]"
-                        >
-                          {specialty}
-                        </Badge>
-                      ))}
-                    </div>
+                    {professional.specialties && professional.specialties.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {professional.specialties.slice(0, 3).map((specialty, idx) => (
+                          <Badge
+                            key={idx}
+                            variant="secondary"
+                            className="text-[.5em]"
+                          >
+                            {specialty}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Action Buttons */}
                     <div className="flex gap-2">
-                      <Button className="flex-1 transition-all duration-300 hover:scale-105">
-                        <FiMail className="mr-2" size={16} />
-                        Contact
-                      </Button>
+                      {professional.contact_email && (
+                        <Button 
+                          className="flex-1 transition-all duration-300 hover:scale-105"
+                          asChild
+                        >
+                          <a href={`mailto:${professional.contact_email}`}>
+                            <FiMail className="mr-2" size={16} />
+                            Contact
+                          </a>
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         className="flex-1 transition-all duration-300 hover:scale-105 bg-transparent"
                         onClick={() => {
-                          // Set the params and navigate to the profile's project page
-                          navigate(`/profiles/${professional.id}`);
+                          navigate(`/profiles/${professional.id || professional.slug}`);
                         }}
                       >
                         <FiEye className="mr-2" size={16} />
@@ -716,14 +600,38 @@ export default function ProfilesPage() {
                 </Card>
               ))}
             </div>
+            )}
 
-            {filteredProfessionals.length === 0 && (
+            {!isLoading && professionals.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-muted-foreground text-lg mb-4">
                   No professionals found matching your criteria.
                 </p>
                 <Button onClick={clearFilters} variant="outline">
                   Clear Filters
+                </Button>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {!isLoading && totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-8">
+                <Button
+                  variant="outline"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
                 </Button>
               </div>
             )}
