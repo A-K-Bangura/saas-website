@@ -15,9 +15,9 @@ import { Button } from "../../ui/Button";
 import { useNavigate } from "react-router-dom";
 // import { useGsapFadeIn } from "@/hooks/use-gsap-fade-in";
 
-import hero1 from "../../../assets/hero_images/hero1.jpg";
+import hero1 from "../../../assets/hero_images/Hero1.jpg";
 import heroMobile1 from "../../../assets/hero_images/HeroMobile1.jpg";
-import hero2 from "../../../assets/hero_images/hero2.png";
+import hero2 from "../../../assets/hero_images/Hero2.png";
 import estimate from "../../../assets/hero_images/estimate.png";
 import store from "../../../assets/hero_images/store.png";
 import projects from "../../../assets/hero_images/project.png";
