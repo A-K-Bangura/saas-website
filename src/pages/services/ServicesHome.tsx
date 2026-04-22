@@ -1,8 +1,18 @@
 import { Link } from "react-router-dom";
 import { Section } from "@/src/components/ui/Section";
 import { Container } from "@/src/components/ui/Container";
-import { TypographyH1, TypographyH2, TypographyP } from "@/src/components/ui/Typography";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/Card";
+import {
+  TypographyH1,
+  TypographyH2,
+  TypographyP,
+} from "@/src/components/ui/Typography";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/src/components/ui/Card";
 import { Button } from "@/src/components/ui/Button";
 import { FiDollarSign, FiUsers, FiShield, FiArrowRight } from "react-icons/fi";
 import { useGSAPFadeIn } from "@/src/hooks/use-gsap-fade-in";
@@ -11,7 +21,8 @@ const services = [
   {
     icon: FiDollarSign,
     title: "Free Estimation",
-    description: "Get a detailed cost estimate for your construction project. Our experts analyze your requirements and provide accurate pricing.",
+    description:
+      "Get a detailed cost estimate for your construction project. Our experts analyze your requirements and provide accurate pricing.",
     href: "/services/estimation",
     features: [
       "Detailed cost breakdown",
@@ -23,7 +34,8 @@ const services = [
   {
     icon: FiUsers,
     title: "Consultancy Request",
-    description: "Expert consultation services for sustainability, cost optimization, project management, and more.",
+    description:
+      "One time free expert consultation services for sustainability, cost optimization, project management, and more.",
     href: "/services/consultancy",
     features: [
       "Sustainability consulting",
@@ -34,8 +46,9 @@ const services = [
   },
   {
     icon: FiShield,
-    title: "Legal Advisory",
-    description: "Professional legal guidance for property titles, contracts, permits, and construction-related legal matters.",
+    title: "Legal Advise",
+    description:
+      "Professional legal guidance for property titles, contracts, permits, and construction-related legal matters.",
     href: "/services/legal-advisory",
     features: [
       "Property title verification",
@@ -47,35 +60,23 @@ const services = [
 ];
 
 export default function ServicesHome() {
-  const cardsRef = useGSAPFadeIn({ y: 40, stagger: 0.15 });
+  // const cardsRef = useGSAPFadeIn({ y: 40, stagger: 0.15 });
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <Section className="bg-gradient-to-b from-background to-muted/30" padding="xl">
-        <Container>
-          <div className="max-w-4xl mx-auto text-center">
-            <TypographyH1 className="mb-6">Our Services</TypographyH1>
-            <TypographyP className="text-xl text-muted-foreground leading-relaxed">
-              Comprehensive architectural and construction services designed to
-              bring your vision to life sustainably, affordably, and beautifully.
-            </TypographyP>
-          </div>
-        </Container>
-      </Section>
-
       {/* Service Cards */}
       <Section>
         <Container>
           <div className="text-center mb-12">
-            <TypographyH2 className="mb-4">Request Our Services</TypographyH2>
-            <TypographyP className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Choose from our range of professional services to get started on your project.
-            </TypographyP>
+            <TypographyH2 className="mb-4">Complementary Services</TypographyH2>
+            {/* <TypographyP className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Choose from our range of professional services to get started on
+              your project.
+            </TypographyP> */}
           </div>
 
           <div
-            ref={cardsRef}
+            // ref={cardsRef}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           >
             {services.map((service, index) => (
@@ -123,4 +124,3 @@ export default function ServicesHome() {
     </div>
   );
 }
-

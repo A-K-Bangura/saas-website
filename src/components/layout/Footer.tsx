@@ -4,21 +4,33 @@ import {
   FiPhone,
   FiMapPin,
   FiFacebook,
-  FiTwitter,
   FiLinkedin,
+  FiYoutube,
+  FiInstagram,
 } from "react-icons/fi";
+import { FaXTwitter } from "react-icons/fa6";
 import SaasLogo1 from "../../assets/logos/SAASLogo1.png";
 import SaasLogo2 from "../../assets/logos/SAASLogo2.png";
 
 export function Footer() {
+  const contactEmail = import.meta.env.VITE_CONTACT_EMAIL || "info@saas-sl.com";
+  const contactPhone = import.meta.env.VITE_CONTACT_PHONE || "+232 XX XXX XXXX";
+  const socialLinks = {
+    facebook: "https://example.com/facebook",
+    twitter: "https://example.com/twitter",
+    linkedin: "https://example.com/linkedin",
+    youtube: "https://example.com/youtube",
+    instagram: "https://example.com/instagram",
+  };
+
   return (
     <footer className="bg-secondary text-secondary-foreground">
       <div className="container mx-auto px-6 max-w-7xl py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="col-span-1 md:col-span-2">
-            <div className="text-2xl font-bold text-primary mb-4">
-              <img src={SaasLogo1} className="h-8" alt="SAAS company logo" />
+            <div className="">
+              <img src={SaasLogo1} className="h-12" alt="SAAS company logo" />
             </div>
             <p className="text-muted-foreground mb-4 max-w-md">
               Sustainable and Affordable Architectural Solutions. Building a
@@ -26,9 +38,51 @@ export function Footer() {
               and cost-effective construction.
             </p>
             <div className="flex space-x-4">
-              <FiFacebook className="w-5 h-5 text-muted-foreground hover:text-primary cursor-pointer transition-colors" />
-              <FiTwitter className="w-5 h-5 text-muted-foreground hover:text-primary cursor-pointer transition-colors" />
-              <FiLinkedin className="w-5 h-5 text-muted-foreground hover:text-primary cursor-pointer transition-colors" />
+              <a
+                href={socialLinks.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
+                <FiFacebook className="w-5 h-5" />
+              </a>
+              <a
+                href={socialLinks.twitter}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="X"
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
+                <FaXTwitter className="w-5 h-5" />
+              </a>
+              <a
+                href={socialLinks.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="LinkedIn"
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
+                <FiLinkedin className="w-5 h-5" />
+              </a>
+              <a
+                href={socialLinks.youtube}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="YouTube"
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
+                <FiYoutube className="w-5 h-5" />
+              </a>
+              <a
+                href={socialLinks.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
+                <FiInstagram className="w-5 h-5" />
+              </a>
             </div>
           </div>
 
@@ -62,10 +116,10 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  to="/portfolio"
+                  to="/projects"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Portfolio
+                  Projects
                 </Link>
               </li>
               <li>
@@ -85,11 +139,11 @@ export function Footer() {
             <ul className="space-y-2">
               <li className="flex items-center space-x-2 text-muted-foreground">
                 <FiMail className="w-4 h-4" />
-                <span>info@saas-sl.com</span>
+                <span>{contactEmail}</span>
               </li>
               <li className="flex items-center space-x-2 text-muted-foreground">
                 <FiPhone className="w-4 h-4" />
-                <span>+232 XX XXX XXXX</span>
+                <span>{contactPhone}</span>
               </li>
               <li className="flex items-center space-x-2 text-muted-foreground">
                 <FiMapPin className="w-4 h-4" />

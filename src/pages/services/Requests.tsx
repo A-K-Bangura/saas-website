@@ -3,11 +3,21 @@ import { useNavigate } from "react-router-dom";
 import { Section } from "@/src/components/ui/Section";
 import { Container } from "@/src/components/ui/Container";
 import { TypographyH1 } from "@/src/components/ui/Typography";
-import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/Card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/src/components/ui/Card";
 import { Badge } from "@/src/components/ui/Badge";
 import { Button } from "@/src/components/ui/Button";
 import { Skeleton } from "@/src/components/ui/Skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/components/ui/Tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/src/components/ui/Tabs";
 import {
   api,
   EstimateResponse,
@@ -15,7 +25,13 @@ import {
   LegalRequestResponse,
 } from "@/src/lib/api";
 import { isAuthenticated } from "@/src/lib/auth";
-import { FiFileText, FiBriefcase, FiShield, FiLoader, FiAlertCircle } from "react-icons/fi";
+import {
+  FiFileText,
+  FiBriefcase,
+  FiShield,
+  FiLoader,
+  FiAlertCircle,
+} from "react-icons/fi";
 import { format } from "date-fns";
 import { useGSAPFadeIn } from "@/src/hooks/use-gsap-fade-in";
 
@@ -23,8 +39,12 @@ export default function RequestsPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("estimates");
   const [estimates, setEstimates] = useState<EstimateResponse[]>([]);
-  const [consultancyRequests, setConsultancyRequests] = useState<ConsultancyRequestResponse[]>([]);
-  const [legalRequests, setLegalRequests] = useState<LegalRequestResponse[]>([]);
+  const [consultancyRequests, setConsultancyRequests] = useState<
+    ConsultancyRequestResponse[]
+  >([]);
+  const [legalRequests, setLegalRequests] = useState<LegalRequestResponse[]>(
+    [],
+  );
   const [isLoadingEstimates, setIsLoadingEstimates] = useState(false);
   const [isLoadingConsultancy, setIsLoadingConsultancy] = useState(false);
   const [isLoadingLegal, setIsLoadingLegal] = useState(false);
@@ -40,21 +60,33 @@ export default function RequestsPage() {
   }, [navigate]);
 
   useEffect(() => {
-    if (activeTab === "estimates" && !loadedTabs.current.has("estimates") && !isLoadingEstimates) {
+    if (
+      activeTab === "estimates" &&
+      !loadedTabs.current.has("estimates") &&
+      !isLoadingEstimates
+    ) {
       loadedTabs.current.add("estimates");
       loadEstimates();
     }
   }, [activeTab, isLoadingEstimates]);
 
   useEffect(() => {
-    if (activeTab === "consultancy" && !loadedTabs.current.has("consultancy") && !isLoadingConsultancy) {
+    if (
+      activeTab === "consultancy" &&
+      !loadedTabs.current.has("consultancy") &&
+      !isLoadingConsultancy
+    ) {
       loadedTabs.current.add("consultancy");
       loadConsultancyRequests();
     }
   }, [activeTab, isLoadingConsultancy]);
 
   useEffect(() => {
-    if (activeTab === "legal" && !loadedTabs.current.has("legal") && !isLoadingLegal) {
+    if (
+      activeTab === "legal" &&
+      !loadedTabs.current.has("legal") &&
+      !isLoadingLegal
+    ) {
       loadedTabs.current.add("legal");
       loadLegalRequests();
     }
@@ -142,7 +174,7 @@ export default function RequestsPage() {
   };
 
   return (
-    <Section className="min-h-screen py-12" ref={pageRef}>
+    <Section className="min-h-screen py-12 !pt-2" ref={pageRef}>
       <Container className="max-w-6xl">
         <div className="mb-8">
           <TypographyH1 className="mb-2">My Service Requests</TypographyH1>
@@ -153,13 +185,13 @@ export default function RequestsPage() {
 
         {error && (
           <Card className="mb-6 border-destructive">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3 text-destructive">
-              <FiAlertCircle className="w-5 h-5" />
-              <span>{error}</span>
-            </div>
-          </CardContent>
-        </Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3 text-destructive">
+                <FiAlertCircle className="w-5 h-5" />
+                <span>{error}</span>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -168,7 +200,10 @@ export default function RequestsPage() {
               <FiFileText className="w-4 h-4" />
               Estimates
             </TabsTrigger>
-            <TabsTrigger value="consultancy" className="flex items-center gap-2">
+            <TabsTrigger
+              value="consultancy"
+              className="flex items-center gap-2"
+            >
               <FiBriefcase className="w-4 h-4" />
               Consultancy
             </TabsTrigger>
@@ -211,7 +246,9 @@ export default function RequestsPage() {
                 {estimates.map((estimate) => (
                   <Card key={estimate.id}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-lg">{estimate.project_title}</CardTitle>
+                      <CardTitle className="text-lg">
+                        {estimate.project_title}
+                      </CardTitle>
                       <Badge variant={getStatusBadgeVariant(estimate.status)}>
                         {estimate.status}
                       </Badge>
@@ -223,59 +260,80 @@ export default function RequestsPage() {
                           <p className="font-medium">{estimate.location}</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Requested Date</p>
+                          <p className="text-muted-foreground">
+                            Requested Date
+                          </p>
                           <p className="font-medium">
-                            {formatDate(estimate.requested_at || estimate.created_at)}
+                            {formatDate(
+                              estimate.requested_at || estimate.created_at,
+                            )}
                           </p>
                         </div>
                         {estimate.estimate_size && (
                           <div>
                             <p className="text-muted-foreground">Size</p>
                             <p className="font-medium">
-                              {estimate.estimate_size} {estimate.estimate_size_unit || "sqm"}
+                              {estimate.estimate_size}{" "}
+                              {estimate.estimate_size_unit || "sqm"}
                             </p>
                           </div>
                         )}
-                        {(estimate.budget_range_min || estimate.budget_range_max) && (
+                        {(estimate.budget_range_min ||
+                          estimate.budget_range_max) && (
                           <div>
-                            <p className="text-muted-foreground">Budget Range</p>
+                            <p className="text-muted-foreground">
+                              Budget Range
+                            </p>
                             <p className="font-medium">
-                              {estimate.budget_range_min && estimate.budget_range_max
+                              {estimate.budget_range_min &&
+                              estimate.budget_range_max
                                 ? `Le ${estimate.budget_range_min.toLocaleString()} - Le ${estimate.budget_range_max.toLocaleString()}`
                                 : estimate.budget_range_min
-                                ? `From Le ${estimate.budget_range_min.toLocaleString()}`
-                                : estimate.budget_range_max
-                                ? `Up to Le ${estimate.budget_range_max.toLocaleString()}`
-                                : "N/A"}
+                                  ? `From Le ${estimate.budget_range_min.toLocaleString()}`
+                                  : estimate.budget_range_max
+                                    ? `Up to Le ${estimate.budget_range_max.toLocaleString()}`
+                                    : "N/A"}
                             </p>
                           </div>
                         )}
                       </div>
                       <div>
-                        <p className="text-muted-foreground text-sm mb-1">Description</p>
+                        <p className="text-muted-foreground text-sm mb-1">
+                          Description
+                        </p>
                         <p className="text-sm">{estimate.description}</p>
                       </div>
                       {estimate.brief_description && (
                         <div>
-                          <p className="text-muted-foreground text-sm mb-1">Brief Description</p>
-                          <p className="text-sm">{estimate.brief_description}</p>
+                          <p className="text-muted-foreground text-sm mb-1">
+                            Brief Description
+                          </p>
+                          <p className="text-sm">
+                            {estimate.brief_description}
+                          </p>
                         </div>
                       )}
                       {estimate.response_notes && (
                         <div className="pt-2 border-t">
-                          <p className="text-muted-foreground text-sm mb-1">Response Notes</p>
+                          <p className="text-muted-foreground text-sm mb-1">
+                            Response Notes
+                          </p>
                           <p className="text-sm">{estimate.response_notes}</p>
                         </div>
                       )}
-                      {estimate.estimated_range_min && estimate.estimated_range_max && (
-                        <div className="pt-2 border-t">
-                          <p className="text-muted-foreground text-sm mb-1">Estimated Range</p>
-                          <p className="text-sm font-semibold">
-                            Le {estimate.estimated_range_min.toLocaleString()} - Le{" "}
-                            {estimate.estimated_range_max.toLocaleString()}
-                          </p>
-                        </div>
-                      )}
+                      {estimate.estimated_range_min &&
+                        estimate.estimated_range_max && (
+                          <div className="pt-2 border-t">
+                            <p className="text-muted-foreground text-sm mb-1">
+                              Estimated Range
+                            </p>
+                            <p className="text-sm font-semibold">
+                              Le {estimate.estimated_range_min.toLocaleString()}{" "}
+                              - Le{" "}
+                              {estimate.estimated_range_max.toLocaleString()}
+                            </p>
+                          </div>
+                        )}
                     </CardContent>
                   </Card>
                 ))}
@@ -316,7 +374,9 @@ export default function RequestsPage() {
                 {consultancyRequests.map((request) => (
                   <Card key={request.id}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-lg">{request.consultancy_type}</CardTitle>
+                      <CardTitle className="text-lg">
+                        {request.consultancy_type}
+                      </CardTitle>
                       <Badge variant={getStatusBadgeVariant(request.status)}>
                         {request.status}
                       </Badge>
@@ -324,25 +384,37 @@ export default function RequestsPage() {
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
-                          <p className="text-muted-foreground">Requested Date</p>
+                          <p className="text-muted-foreground">
+                            Requested Date
+                          </p>
                           <p className="font-medium">
-                            {formatDate(request.requested_date || request.created_at)}
+                            {formatDate(
+                              request.requested_date || request.created_at,
+                            )}
                           </p>
                         </div>
                         {request.preferred_date && (
                           <div>
-                            <p className="text-muted-foreground">Preferred Date</p>
-                            <p className="font-medium">{formatDate(request.preferred_date)}</p>
+                            <p className="text-muted-foreground">
+                              Preferred Date
+                            </p>
+                            <p className="font-medium">
+                              {formatDate(request.preferred_date)}
+                            </p>
                           </div>
                         )}
                       </div>
                       <div>
-                        <p className="text-muted-foreground text-sm mb-1">Request Details</p>
+                        <p className="text-muted-foreground text-sm mb-1">
+                          Request Details
+                        </p>
                         <p className="text-sm">{request.request_details}</p>
                       </div>
                       {request.response_notes && (
                         <div className="pt-2 border-t">
-                          <p className="text-muted-foreground text-sm mb-1">Response Notes</p>
+                          <p className="text-muted-foreground text-sm mb-1">
+                            Response Notes
+                          </p>
                           <p className="text-sm">{request.response_notes}</p>
                         </div>
                       )}
@@ -386,7 +458,9 @@ export default function RequestsPage() {
                 {legalRequests.map((request) => (
                   <Card key={request.id}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-lg">{request.issue_type}</CardTitle>
+                      <CardTitle className="text-lg">
+                        {request.issue_type}
+                      </CardTitle>
                       <Badge variant={getStatusBadgeVariant(request.status)}>
                         {request.status}
                       </Badge>
@@ -394,25 +468,37 @@ export default function RequestsPage() {
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
-                          <p className="text-muted-foreground">Requested Date</p>
+                          <p className="text-muted-foreground">
+                            Requested Date
+                          </p>
                           <p className="font-medium">
-                            {formatDate(request.requested_date || request.created_at)}
+                            {formatDate(
+                              request.requested_date || request.created_at,
+                            )}
                           </p>
                         </div>
                         {request.property_detail && (
                           <div>
-                            <p className="text-muted-foreground">Property Detail</p>
-                            <p className="font-medium">{request.property_detail}</p>
+                            <p className="text-muted-foreground">
+                              Property Detail
+                            </p>
+                            <p className="font-medium">
+                              {request.property_detail}
+                            </p>
                           </div>
                         )}
                       </div>
                       <div>
-                        <p className="text-muted-foreground text-sm mb-1">Request Details</p>
+                        <p className="text-muted-foreground text-sm mb-1">
+                          Request Details
+                        </p>
                         <p className="text-sm">{request.request_details}</p>
                       </div>
                       {request.response_notes && (
                         <div className="pt-2 border-t">
-                          <p className="text-muted-foreground text-sm mb-1">Response Notes</p>
+                          <p className="text-muted-foreground text-sm mb-1">
+                            Response Notes
+                          </p>
                           <p className="text-sm">{request.response_notes}</p>
                         </div>
                       )}
@@ -427,4 +513,3 @@ export default function RequestsPage() {
     </Section>
   );
 }
-

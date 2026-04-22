@@ -2,9 +2,9 @@
 import { FiArrowRight, FiPlay } from "react-icons/fi";
 import { useGsapFadeIn } from "@/src/hooks/use-gsap-fade-in";
 import { Button } from "../../ui/Button";
-import hero1 from "../../../assets/home_images/hero1.jpg";
-import heroMobile1 from "../../../assets/home_images/HeroMobile1.jpg";
-import hero2 from "../../../assets/home_images/hero2.png";
+import hero1 from "../../../assets/hero_images/Hero1.jpg";
+import heroMobile1 from "../../../assets/hero_images/HeroMobile1.jpg";
+import hero2 from "../../../assets/hero_images/Hero2.png";
 
 const slides = [
   {

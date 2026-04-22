@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { FiSearch, FiStar, FiMapPin, FiCalendar, FiMail, FiArrowLeft } from "react-icons/fi";
+import {
+  FiSearch,
+  FiStar,
+  FiMapPin,
+  FiCalendar,
+  FiArrowLeft,
+} from "react-icons/fi";
+import { FaWhatsapp } from "react-icons/fa";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Button } from "@/src/components/ui/Button";
@@ -28,6 +35,9 @@ export default function ProfileProjectsPage() {
   const [projects, setProjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
+  const normalizedContactPhone = (
+    import.meta.env.VITE_CONTACT_PHONE ?? ""
+  ).replace(/\D/g, "");
 
   const profilePanelRef = useRef<HTMLDivElement>(null);
   const projectsGridRef = useRef<HTMLDivElement>(null);
@@ -85,7 +95,7 @@ export default function ProfileProjectsPage() {
               start: "top 80%",
               once: true,
             },
-          }
+          },
         );
       }
 
@@ -105,7 +115,7 @@ export default function ProfileProjectsPage() {
               start: "top 80%",
               once: true,
             },
-          }
+          },
         );
       }
     });
@@ -120,7 +130,7 @@ export default function ProfileProjectsPage() {
       filtered = filtered.filter(
         (project) =>
           project.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          project.description?.toLowerCase().includes(searchTerm.toLowerCase())
+          project.description?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
@@ -130,13 +140,13 @@ export default function ProfileProjectsPage() {
 
     if (selectedYear !== "All") {
       filtered = filtered.filter(
-        (project) => project.year?.toString() === selectedYear
+        (project) => project.year?.toString() === selectedYear,
       );
     }
 
     if (selectedLocation !== "All") {
       filtered = filtered.filter(
-        (project) => project.location === selectedLocation
+        (project) => project.location === selectedLocation,
       );
     }
 
@@ -181,7 +191,9 @@ export default function ProfileProjectsPage() {
   ];
   const projectYears = [
     "All",
-    ...Array.from(new Set(projects.map((p) => p.year?.toString()).filter(Boolean)))
+    ...Array.from(
+      new Set(projects.map((p) => p.year?.toString()).filter(Boolean)),
+    )
       .sort()
       .reverse(),
   ];
@@ -263,47 +275,63 @@ export default function ProfileProjectsPage() {
                 {professional.experience_years !== undefined && (
                   <div className="flex items-center gap-2 text-sm">
                     <FiCalendar className="text-green-500" />
-                    <span>{professional.experience_years} years experience</span>
+                    <span>
+                      {professional.experience_years} years experience
+                    </span>
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-sm">
                   <FiStar className="text-yellow-500" />
                   <span>
-                    {professional.rating?.toFixed(1) || "N/A"} ({professional.projects_count || 0} projects)
+                    {professional.rating?.toFixed(1) || "N/A"} (
+                    {professional.projects_count || 0} projects)
                   </span>
                 </div>
               </div>
 
               {/* Specialties */}
-              {professional.specialties && professional.specialties.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-sm font-semibold mb-2">Specialties</h3>
-                  <div className="flex flex-wrap gap-1">
-                    {professional.specialties.map((specialty, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        {specialty}
-                      </Badge>
-                    ))}
+              {professional.specialties &&
+                professional.specialties.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-semibold mb-2">Specialties</h3>
+                    <div className="flex flex-wrap gap-1">
+                      {professional.specialties.map((specialty, index) => (
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="text-xs"
+                        >
+                          {specialty}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Bio */}
               {professional.bio && (
                 <div className="mb-6">
-                  <p className="text-sm text-gray-300 line-clamp-4">{professional.bio}</p>
+                  <p className="text-sm text-gray-300 line-clamp-4">
+                    {professional.bio}
+                  </p>
                 </div>
               )}
 
-              {/* Contact Button */}
-              {professional.contact_email && (
+              {/* Contact Button — WhatsApp to head office (env), not professional directly */}
+              {normalizedContactPhone && (
                 <div className="mb-8">
-                  <Button 
+                  <Button
                     className="w-full bg-green-600 hover:bg-green-700 text-white"
                     asChild
                   >
-                    <a href={`mailto:${professional.contact_email}`}>
-                      <FiMail className="mr-2 h-4 w-4" />
+                    <a
+                      href={`https://wa.me/${normalizedContactPhone}?text=${encodeURIComponent(
+                        `Hello, I am interested in one of ${professional.name}'s projects and would like more information.`,
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <FaWhatsapp className="mr-2 h-4 w-4" />
                       Contact {professional.name.split(" ")[0]}
                     </a>
                   </Button>
@@ -532,9 +560,13 @@ export default function ProfileProjectsPage() {
               />
               <h1 className="text-2xl font-bold mb-1">{professional.name}</h1>
               {professional.headline && (
-                <p className="text-gray-300 text-sm mb-1">{professional.headline}</p>
+                <p className="text-gray-300 text-sm mb-1">
+                  {professional.headline}
+                </p>
               )}
-              <p className="text-gray-300 mb-4 capitalize">{professional.profession_type}</p>
+              <p className="text-gray-300 mb-4 capitalize">
+                {professional.profession_type}
+              </p>
 
               <div className="flex flex-wrap justify-center gap-4 text-sm mb-4">
                 {professional.location && (
@@ -549,15 +581,20 @@ export default function ProfileProjectsPage() {
                 </div>
               </div>
 
-              {professional.specialties && professional.specialties.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-1 mb-4">
-                  {professional.specialties.map((specialty, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {specialty}
-                    </Badge>
-                  ))}
-                </div>
-              )}
+              {professional.specialties &&
+                professional.specialties.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-1 mb-4">
+                    {professional.specialties.map((specialty, index) => (
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="text-xs"
+                      >
+                        {specialty}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
             </div>
           </div>
         )}
@@ -701,19 +738,26 @@ export default function ProfileProjectsPage() {
         </div>
 
         {/* Floating Contact Button */}
-        {professional?.contact_email && (
+        {/* {professional && normalizedContactPhone && (
           <div className="fixed bottom-6 right-6 z-50">
             <Button
               size="lg"
               className="rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg"
               asChild
             >
-              <a href={`mailto:${professional.contact_email}`}>
-                <FiMail className="h-5 w-5" />
+              <a
+                href={`https://wa.me/${normalizedContactPhone}?text=${encodeURIComponent(
+                  `Hello, I am interested in one of ${professional.name}'s projects and would like more information.`,
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Contact via WhatsApp"
+              >
+                <FaWhatsapp className="h-5 w-5" />
               </a>
             </Button>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

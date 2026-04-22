@@ -22,10 +22,12 @@ const blogPosts = [
     description:
       "Exploring eco-friendly materials that are revolutionizing construction practices while supporting local communities and reducing environmental impact.",
     category: "SUSTAINABILITY",
-    image: "/modern-sustainable-architecture-building-in-sierra.jpg",
+    image:
+      "https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=1200&q=80",
     date: "2024-03-15",
     readTime: "5 min read",
     source: "SAAS Insights",
+    link: "https://www.archdaily.com/search/projects/categories/sustainable-architecture",
   },
   {
     id: 2,
@@ -33,66 +35,12 @@ const blogPosts = [
     description:
       "How innovative design approaches and local materials are making quality housing more affordable for Sierra Leone families.",
     category: "HOUSING",
-    image: "/affordable-housing-development-sierra-leone-sustai.jpg",
+    image:
+      "https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1200&q=80",
     date: "2024-03-10",
     readTime: "7 min read",
     source: "Architecture Today",
-  },
-  {
-    id: 3,
-    title: "Community-Centered Design: Building for Local Needs",
-    description:
-      "The importance of understanding local culture and needs when designing buildings that serve Sierra Leone communities effectively.",
-    category: "COMMUNITY",
-    image: "/community-building-architecture-sierra-leone-local.jpg",
-    date: "2024-03-05",
-    readTime: "6 min read",
-    source: "SAAS Insights",
-  },
-  {
-    id: 4,
-    title:
-      "Green Building Certifications: Standards for Sustainable Construction",
-    description:
-      "Understanding international green building standards and how they apply to construction projects in West Africa.",
-    category: "CERTIFICATION",
-    image: "/green-building-with-biodiversity-integration-sierr.jpg",
-    date: "2024-02-28",
-    readTime: "8 min read",
-    source: "Green Building Council",
-  },
-  {
-    id: 5,
-    title: "Climate-Responsive Architecture in Tropical Environments",
-    description:
-      "Designing buildings that work with Sierra Leone's climate to provide comfort while minimizing energy consumption.",
-    category: "CLIMATE",
-    image: "/modern-health-center-building-architecture.jpg",
-    date: "2024-02-20",
-    readTime: "6 min read",
-    source: "SAAS Insights",
-  },
-  {
-    id: 6,
-    title: "Local Workforce Development in Construction",
-    description:
-      "How SAAS is training local workers in sustainable construction techniques, creating jobs and building community capacity.",
-    category: "WORKFORCE",
-    image: "/sustainable-school-building-architecture.jpg",
-    date: "2024-02-15",
-    readTime: "5 min read",
-    source: "Skills Development",
-  },
-  {
-    id: 7,
-    title: "Innovation in Low-Cost Construction Techniques",
-    description:
-      "Exploring new methods and technologies that reduce construction costs without compromising quality or sustainability.",
-    category: "INNOVATION",
-    image: "/green-office-building-sustainable-architecture.jpg",
-    date: "2024-02-10",
-    readTime: "7 min read",
-    source: "Construction Innovation",
+    link: "https://www.dezeen.com/tag/housing/",
   },
 ];
 
@@ -118,7 +66,15 @@ export function BlogPreview() {
     return () => window.removeEventListener("resize", updateCardsPerView);
   }, []);
 
-  const maxIndex = Math.max(0, blogPosts.length + 4 - cardsPerView);
+  /** Blog cards + “See more” CTA card */
+  const totalSlides = blogPosts.length + 1;
+
+  useEffect(() => {
+    const max = Math.max(0, totalSlides - cardsPerView);
+    setCurrentIndex((prev) => Math.min(prev, max));
+  }, [cardsPerView, totalSlides]);
+
+  const maxIndex = Math.max(0, totalSlides - cardsPerView);
   const canGoNext = currentIndex < maxIndex;
   const canGoPrev = currentIndex > 0;
 
@@ -135,7 +91,7 @@ export function BlogPreview() {
   };
 
   const currentPage = Math.floor(currentIndex / cardsPerView) + 1;
-  const totalPages = Math.ceil(blogPosts.length / cardsPerView);
+  const totalPages = Math.max(1, Math.ceil(totalSlides / cardsPerView));
 
   return (
     <section ref={sectionRef} className="py-16 bg-gray-50">
@@ -156,66 +112,73 @@ export function BlogPreview() {
             <div
               className="flex transition-transform duration-500 ease-in-out gap-4"
               style={{
-                transform: `translateX(-${
-                  currentIndex * (100 / cardsPerView)
-                }%)`,
-                width: `${(blogPosts.length / cardsPerView) * 100}%`,
+                width: `${(totalSlides / cardsPerView) * 100}%`,
+                transform: `translateX(-${(currentIndex * 100) / totalSlides}%)`,
               }}
             >
               {blogPosts.map((post) => (
                 <div
                   key={post.id}
-                  className="flex-shrink-0"
-                  style={{ width: `${100 / cardsPerView}%` }}
+                  className="min-w-0 flex-shrink-0"
+                  style={{ width: `${100 / totalSlides}%` }}
                 >
-                  <Card className="h-full py-0 gap-2 rounded-none hover:shadow-lg transition-shadow duration-300 bg-white">
-                    <div className="relative w-full h-[200px] overflow-hidden">
-                      <img
-                        src={post.image || "/placeholder.svg"}
-                        alt={post.title}
-                        className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                    <CardContent className="py-2 px-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <Badge
-                          variant="secondary"
-                          className="text-xs font-medium"
-                        >
-                          {post.category}
-                        </Badge>
-                        <span className="text-xs text-gray-500">
-                          {post.readTime}
-                        </span>
+                  <a
+                    href={post.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block h-full"
+                  >
+                    <Card className="flex h-full min-h-0 flex-col py-0 gap-2 rounded-none hover:shadow-lg transition-shadow duration-300 bg-white">
+                      <div className="relative w-full h-[200px] overflow-hidden">
+                        <img
+                          src={post.image || "/placeholder.svg"}
+                          alt={post.title}
+                          className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        />
                       </div>
-                      <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-2 hover:text-accent transition-colors">
-                        <Link to={`/blog/${post.id}`}>{post.title}</Link>
-                      </h3>
-                      <p className="text-gray-600 text-sm mb-3 line-clamp-3">
-                        {post.description}
-                      </p>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span>{post.source}</span>
-                        <span>{new Date(post.date).toLocaleDateString()}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      <CardContent className="flex min-h-0 flex-1 flex-col py-2 px-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge
+                            variant="secondary"
+                            className="text-xs font-medium"
+                          >
+                            {post.category}
+                          </Badge>
+                          <span className="text-xs text-gray-500">
+                            {post.readTime}
+                          </span>
+                        </div>
+                        <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-2 hover:text-accent transition-colors">
+                          {post.title}
+                        </h3>
+                        <p className="text-gray-600 text-sm mb-3 line-clamp-3">
+                          {post.description}
+                        </p>
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <span>{post.source}</span>
+                          <span>
+                            {new Date(post.date).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </a>
                 </div>
               ))}
 
               {/* See More Card */}
               <div
-                className="flex-shrink-0"
-                style={{ width: `${100 / cardsPerView}%` }}
+                className="min-w-0 flex-shrink-0"
+                style={{ width: `${100 / totalSlides}%` }}
               >
-                <Card className="h-full bg-accent-green hover:bg-accent-green/90 transition-colors duration-300 text-white">
+                <Card className="flex h-full min-h-0 flex-col bg-accent-green hover:bg-accent-green/90 transition-colors duration-300 text-black">
                   <CardContent className="p-6 h-full flex flex-col items-center justify-center text-center">
                     <h3 className="font-bold text-xl mb-4">
                       Explore More Articles
                     </h3>
-                    <p className="text-green-100 mb-6">
+                    <p className="text-green-500 mb-6">
                       Discover our complete collection of insights on
-                      sustainable architecture and construction
+                      Sustainable Architecture and Construction
                     </p>
                     <Link to="/blog">
                       <Button
@@ -223,7 +186,7 @@ export function BlogPreview() {
                         className="bg-white text-accent-green hover:bg-gray-100"
                       >
                         See All Articles
-                        <FiArrowRight className="ml-2 h-4 w-4" />
+                        <FiArrowRight className="ml-2 h-3 w-3" />
                       </Button>
                     </Link>
                   </CardContent>

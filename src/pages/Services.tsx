@@ -16,7 +16,17 @@
 // import { Button } from "@/components/ui/button";
 // import { Badge } from "@/components/ui/badge";
 // import { CTASection } from "@/components/ui/cta-section";
-import { FiHome, FiTool, FiUsers, FiCheck, FiArrowRight } from "react-icons/fi";
+import { useState } from "react";
+import {
+  FiHome,
+  FiTool,
+  FiUsers,
+  FiCheck,
+  FiArrowRight,
+  FiMail,
+  FiMessageCircle,
+} from "react-icons/fi";
+import { FaWhatsapp } from "react-icons/fa";
 import { Section } from "../components/ui/Section";
 import { Container } from "../components/ui/Container";
 import {
@@ -35,6 +45,18 @@ import {
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { CTASection } from "../components/ui/CtaSection";
+import { Input } from "../components/ui/Input";
+import { Label } from "../components/ui/Label";
+import { Textarea } from "../components/ui/Textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/Dialog";
+import ServicesHome from "./services/ServicesHome";
+import servicesHeroImage from "../assets/hero_images/services1.png";
 
 const services = [
   {
@@ -106,29 +128,29 @@ const services = [
     ],
     pricing: "$150-300 per hour",
   },
-  {
-    icon: FiHome,
-    title: "Sustainable Solutions",
-    description:
-      "Eco-friendly building solutions that reduce environmental impact while maintaining affordability.",
-    features: [
-      "Green Building Certification",
-      "Energy Efficiency Design",
-      "Water Conservation Systems",
-      "Waste Reduction Strategies",
-      "Local Material Integration",
-      "Renewable Energy Planning",
-    ],
-    process: [
-      "Sustainability Assessment",
-      "Green Design Integration",
-      "Material Selection",
-      "System Design",
-      "Implementation Oversight",
-      "Performance Monitoring",
-    ],
-    pricing: "5-10% premium on standard design",
-  },
+  // {
+  //   icon: FiHome,
+  //   title: "Sustainable Solutions",
+  //   description:
+  //     "Eco-friendly building solutions that reduce environmental impact while maintaining affordability.",
+  //   features: [
+  //     "Green Building Certification",
+  //     "Energy Efficiency Design",
+  //     "Water Conservation Systems",
+  //     "Waste Reduction Strategies",
+  //     "Local Material Integration",
+  //     "Renewable Energy Planning",
+  //   ],
+  //   process: [
+  //     "Sustainability Assessment",
+  //     "Green Design Integration",
+  //     "Material Selection",
+  //     "System Design",
+  //     "Implementation Oversight",
+  //     "Performance Monitoring",
+  //   ],
+  //   pricing: "5-10% premium on standard design",
+  // },
 ];
 
 const additionalServices = [
@@ -141,17 +163,84 @@ const additionalServices = [
 ];
 
 export default function ServicesPage() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [contactMethod, setContactMethod] = useState<"email" | "whatsapp">(
+    "email",
+  );
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    service: "",
+    message: "",
+  });
+
+  const contactEmail = import.meta.env.VITE_CONTACT_EMAIL ?? "";
+  const normalizedPhone = (import.meta.env.VITE_CONTACT_PHONE ?? "").replace(
+    /\D/g,
+    "",
+  );
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleOpenModal = (serviceTitle: string) => {
+    setFormData((prev) => ({ ...prev, service: serviceTitle }));
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    const formattedMessage = [
+      "New Service Request",
+      "",
+      `Name: ${formData.name}`,
+      `Email: ${formData.email}`,
+      `Phone: ${formData.phone || "N/A"}`,
+      `Service: ${formData.service || "General enquiry"}`,
+      "",
+      "Message:",
+      formData.message,
+    ].join("\n");
+
+    if (contactMethod === "email") {
+      if (!contactEmail) return;
+      const subject = encodeURIComponent(
+        `Service enquiry: ${formData.service || "General request"}`,
+      );
+      const body = encodeURIComponent(formattedMessage);
+      window.location.href = `mailto:${contactEmail}?subject=${subject}&body=${body}`;
+    } else {
+      if (!normalizedPhone) return;
+      const whatsappUrl = `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(
+        formattedMessage,
+      )}`;
+      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+    }
+
+    setIsModalOpen(false);
+  };
+
   return (
     <div>
       {/* Hero Section */}
-      <Section
-        className="bg-gradient-to-b from-background to-muted/30"
-        padding="xl"
-      >
+      <Section className="relative overflow-hidden" padding="xl">
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${servicesHeroImage})` }}
+        />
+        <div className="absolute inset-0 bg-primary/30" />
         <Container>
-          <div className="max-w-4xl mx-auto text-center">
-            <TypographyH1 className="mb-6">Our Services</TypographyH1>
-            <TypographyP className="text-xl text-muted-foreground leading-relaxed">
+          <div className="relative z-10 max-w-4xl text-secondary-foreground mx-auto text-center">
+            <TypographyH1 className="mb-3 font-bold lg:text-6xl">
+              Our Core Services
+            </TypographyH1>
+            <TypographyP className="text-xl font-semibold text-muted leading-relaxed">
               Comprehensive architectural and construction services designed to
               bring your vision to life sustainably, affordably, and
               beautifully.
@@ -202,7 +291,10 @@ export default function ServicesPage() {
                       </div>
                     </div>
 
-                    <Button className="mt-6">
+                    <Button
+                      className="mt-6"
+                      onClick={() => handleOpenModal(service.title)}
+                    >
                       Get Started
                       <FiArrowRight className="ml-2 w-4 h-4" />
                     </Button>
@@ -231,6 +323,8 @@ export default function ServicesPage() {
         </Container>
       </Section>
 
+      <ServicesHome />
+
       {/* Additional Services */}
       <Section className="bg-muted/30">
         <Container>
@@ -256,10 +350,125 @@ export default function ServicesPage() {
 
       <CTASection
         title="Ready to Start Your Project?"
-        description="Contact us today for a free consultation and personalized quote for your architectural needs."
-        primaryButtonText="Get Free Consultation"
-        secondaryButtonText="View Our Portfolio"
+        description="Contact us today to make inquiries or call to book an appointment."
+        primaryButtonText="Chat on WhatsApp"
+        secondaryButtonText="Call for an Appointment"
       />
+
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Start Your Service Request</DialogTitle>
+            <DialogDescription>
+              Fill out the form and choose whether to send via email or
+              WhatsApp.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Your full name"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="your.email@example.com"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  placeholder="+232..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="service">Service</Label>
+                <Input
+                  id="service"
+                  name="service"
+                  value={formData.service}
+                  onChange={handleInputChange}
+                  placeholder="Type of service needed"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="message">Project Details</Label>
+              <Textarea
+                id="message"
+                name="message"
+                rows={4}
+                value={formData.message}
+                onChange={handleInputChange}
+                placeholder="Tell us briefly about your project requirements..."
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Send Via</Label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  type="button"
+                  variant={contactMethod === "email" ? "default" : "outline"}
+                  className="justify-center"
+                  onClick={() => setContactMethod("email")}
+                >
+                  <FiMail className="mr-2 w-4 h-4" />
+                  Email
+                </Button>
+                <Button
+                  type="button"
+                  variant={contactMethod === "whatsapp" ? "default" : "outline"}
+                  className="justify-center"
+                  onClick={() => setContactMethod("whatsapp")}
+                >
+                  <FaWhatsapp className="mr-2 w-4 h-4" />
+                  WhatsApp
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 sm:justify-end pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">
+                <FiMessageCircle className="mr-2 w-4 h-4" />
+                Send Request
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

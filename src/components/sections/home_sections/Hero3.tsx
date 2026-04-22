@@ -12,63 +12,68 @@ import {
   FiChevronRight,
 } from "react-icons/fi";
 import { Button } from "../../ui/Button";
+import { useNavigate } from "react-router-dom";
 // import { useGsapFadeIn } from "@/hooks/use-gsap-fade-in";
 
-import hero1 from "../../../assets/home_images/hero1.jpg";
-import heroMobile1 from "../../../assets/home_images/HeroMobile1.jpg";
-import hero2 from "../../../assets/home_images/hero2.png";
+import hero1 from "../../../assets/hero_images/hero1.jpg";
+import heroMobile1 from "../../../assets/hero_images/HeroMobile1.jpg";
+import hero2 from "../../../assets/hero_images/hero2.png";
+import estimate from "../../../assets/hero_images/estimate.png";
+import store from "../../../assets/hero_images/store.png";
+import projects from "../../../assets/hero_images/project.png";
 
 const slides = [
   {
     id: 1,
     title: "Sustainable & Affordable Architectural Solutions",
-    subtitle: "No more worries",
+    subtitle: "Expert Professionals You Can Trust",
     description:
-      "Building a better future for Sierra Leone through innovative, eco-friendly, and cost-effective construction solutions that don't compromise on quality.",
-    ctaText: "Get a Constructor",
-    ctaAction: "quote",
+      "Skip the stress of site mismanagement, endless excuses and late delivery. We provide certified, reliable professionals dedicated to precision, safety, and bringing your blueprint to life on time.",
+    ctaText: "View Professionals",
+    ctaAction: "professionals",
     backgroundImage: hero1,
     backgroundImageMobile: heroMobile1,
   },
   {
     id: 2,
     title: "Sustainable & Affordable Architectural Solutions",
-    subtitle: "Biodiversity",
+    subtitle: "Know Your Costs Upfront",
     description:
-      "Our eco-friendly designs integrate seamlessly with Sierra Leone's natural environment, preserving local ecosystems while creating beautiful spaces.",
-    ctaText: "Learn More",
-    ctaAction: "learn",
-    backgroundImage: hero1,
-    backgroundImageMobile: heroMobile1,
+      "Planning your dream build? Get a transparent, comprehensive cost breakdown tailored to your project requirements so you can build with confidence within your budget.",
+    ctaText: "Get a Free Estimate",
+    ctaAction: "estimates",
+    backgroundImage: estimate,
+    backgroundImageMobile: estimate,
   },
   {
     id: 3,
     title: "Sustainable & Affordable Architectural Solutions",
-    subtitle: "Design Solutions",
+    subtitle: "Quality Materials, Delivered",
     description:
-      "We work closely with local communities to create architectural solutions that reflect cultural values and meet specific regional needs.",
-    ctaText: "View Projects",
-    ctaAction: "projects",
-    backgroundImage: hero1,
-    backgroundImageMobile: heroMobile1,
+      "From eco-friendly blocks to premium finishing, browse our curated store for high-grade construction materials that stand the test of time.",
+    ctaText: "Shop Materials",
+    ctaAction: "store",
+    backgroundImage: store,
+    backgroundImageMobile: store,
   },
   {
     id: 4,
     title: "Sustainable & Affordable Architectural Solutions",
-    subtitle: "For Everyone",
+    subtitle: "Our Portfolio of Excellence",
     description:
-      "Making quality housing accessible to all Sierra Leoneans through innovative construction methods and sustainable materials.",
-    ctaText: "Get Started",
-    ctaAction: "start",
-    backgroundImage: hero1,
-    backgroundImageMobile: heroMobile1,
+      "Browse our portfolio of completed residential, commercial, and community projects across Sierra Leone — proof that quality construction and affordability can go hand in hand.",
+    ctaText: "View Projects",
+    ctaAction: "projects",
+    backgroundImage: projects,
+    backgroundImageMobile: projects,
   },
 ];
 
 export function Hero() {
+  const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [cursorPosition, setCursorPosition] = useState<"left" | "right">(
-    "right"
+    "right",
   );
   const [isHovered, setIsHovered] = useState(false);
 
@@ -110,7 +115,7 @@ export function Hero() {
         setCursorPosition(x > centerX ? "right" : "left"); // Middle slides: based on position
       }
     },
-    [currentSlide]
+    [currentSlide],
   );
 
   const handleHeroClick = useCallback(() => {
@@ -122,6 +127,23 @@ export function Hero() {
   }, [cursorPosition, currentSlide, nextSlide, prevSlide]);
 
   const currentSlideData = slides[currentSlide];
+
+  const handleCtaClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+
+      const ctaRouteMap: Record<string, string> = {
+        professionals: "/profiles",
+        estimates: "/services/estimation",
+        store: "/store",
+        projects: "/projects",
+      };
+
+      const targetRoute = ctaRouteMap[currentSlideData.ctaAction] ?? "/contact";
+      navigate(targetRoute);
+    },
+    [currentSlideData.ctaAction, navigate],
+  );
 
   return (
     <section
@@ -178,10 +200,10 @@ export function Hero() {
             style={{ textAlign: "left" }}
           >
             <div ref={titleRef}>
-              <h1 className="text-sm md:text-xl lg:text-xl font-bold tracking-tight">
+              <h1 className="text-sm md:text-xl lg:text-xl mt-10 font-bold tracking-tight">
                 {currentSlideData.title}
               </h1>
-              <p className="text-4xl md:text-7xl lg:text-[6rem] font-bold tracking-tight mb-2">
+              <p className="text-4xl md:text-7xl lg:text-[5rem] font-bold tracking-tight mb-2">
                 {currentSlideData.subtitle}
               </p>
             </div>
@@ -199,6 +221,7 @@ export function Hero() {
               <Button
                 size="lg"
                 className="text-lg px-8 py-4 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                onClick={handleCtaClick}
               >
                 {currentSlideData.ctaText}
                 <FiArrowRight className="ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" />
@@ -206,7 +229,7 @@ export function Hero() {
             </div>
           </div>
 
-          <div className="flex justify-center md:justify-start mt-12 space-x-2">
+          <div className="flex justify-center md:justify-start mt-8 space-x-2">
             {slides.map((_, index) => (
               <button
                 key={index}

@@ -1,4 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+  type KeyboardEvent,
+} from "react";
 import {
   FiStar,
   FiMapPin,
@@ -10,6 +17,9 @@ import {
   FiArrowLeft,
   FiExternalLink,
   FiUser,
+  FiPhoneCall,
+  FiChevronLeft,
+  FiChevronRight,
 } from "react-icons/fi";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -37,17 +47,57 @@ import { api, type Project } from "@/src/lib/api";
 
 gsap.registerPlugin(ScrollTrigger);
 
+function getProjectMapEmbedUrl(latitude: number, longitude: number) {
+  const delta = 0.012;
+  const minLon = longitude - delta;
+  const minLat = latitude - delta;
+  const maxLon = longitude + delta;
+  const maxLat = latitude + delta;
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${minLon},${minLat},${maxLon},${maxLat}&layer=mapnik&marker=${latitude},${longitude}`;
+}
+
 export default function ProjectDetailsPage() {
   const params = useParams<{ project: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
-  const [heroApi, setHeroApi] = useState<CarouselApi>();
+  const [heroSlideIndex, setHeroSlideIndex] = useState(0);
   const [progressApi, setProgressApi] = useState<CarouselApi>();
   const [rendersApi, setRendersApi] = useState<CarouselApi>();
 
   const heroRef = useRef<HTMLDivElement>(null);
   const sectionsRef = useRef<HTMLDivElement>(null);
+  const heroTouchStartX = useRef<number | null>(null);
+
+  const heroImages = useMemo(() => {
+    if (!project) return ["/placeholder.svg"];
+    if (project.hero_images && project.hero_images.length > 0) {
+      return project.hero_images;
+    }
+    return ["/placeholder.svg"];
+  }, [project]);
+
+  const goHeroPrev = useCallback(() => {
+    setHeroSlideIndex((i) => (i - 1 + heroImages.length) % heroImages.length);
+  }, [heroImages.length]);
+
+  const goHeroNext = useCallback(() => {
+    setHeroSlideIndex((i) => (i + 1) % heroImages.length);
+  }, [heroImages.length]);
+
+  const handleHeroKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      if (heroImages.length <= 1) return;
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        goHeroPrev();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        goHeroNext();
+      }
+    },
+    [goHeroPrev, goHeroNext, heroImages.length],
+  );
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -60,7 +110,9 @@ export default function ProjectDetailsPage() {
           return;
         }
         // Try to convert to number if it's a numeric string, otherwise use as-is
-        const projectId = /^\d+$/.test(projectParam) ? parseInt(projectParam, 10) : projectParam;
+        const projectId = /^\d+$/.test(projectParam)
+          ? parseInt(projectParam, 10)
+          : projectParam;
         const projectData = await api.getProject(projectId);
         setProject(projectData);
       } catch (error) {
@@ -96,29 +148,32 @@ export default function ProjectDetailsPage() {
             start: "top 80%",
             toggleActions: "play none none reverse",
           },
-        }
+        },
       );
     }
   }, [project]);
 
-  // Auto-play hero carousel every 5 seconds
   useEffect(() => {
-    if (!heroApi) return;
+    setHeroSlideIndex(0);
+  }, [project?.id]);
 
-    const interval = setInterval(() => {
-      heroApi.scrollNext();
+  useEffect(() => {
+    if (!project || heroImages.length <= 1) return;
+
+    const interval = window.setInterval(() => {
+      setHeroSlideIndex((i) => (i + 1) % heroImages.length);
     }, 7000);
 
-    return () => clearInterval(interval);
-  }, [heroApi]);
+    return () => window.clearInterval(interval);
+  }, [project?.id, heroImages.length]);
 
-  // Auto-play progress carousel on hover0008970-=-
+  // Auto-play progress carousel on hover
   const handleProgressMouseEnter = () => {
     if (!progressApi) return;
 
     const interval = setInterval(() => {
       progressApi.scrollNext();
-    }, 7000);
+    }, 4000);
 
     // Store interval ID for cleanup
     (progressApi as any).autoPlayInterval = interval;
@@ -137,7 +192,7 @@ export default function ProjectDetailsPage() {
 
     const interval = setInterval(() => {
       rendersApi.scrollNext();
-    }, 7000);
+    }, 4000);
 
     // Store interval ID for cleanup
     (rendersApi as any).autoPlayInterval = interval;
@@ -210,36 +265,83 @@ export default function ProjectDetailsPage() {
           </Link>
         </div>
 
-        <Carousel
-          className="h-full"
-          setApi={setHeroApi}
-          opts={{
-            loop: true,
-            duration: 20,
-            dragFree: false,
+        <div
+          className="relative h-full outline-none"
+          role="region"
+          aria-roledescription="carousel"
+          aria-label={`${project.title} hero images`}
+          tabIndex={0}
+          onKeyDown={handleHeroKeyDown}
+          onTouchStart={(e) => {
+            heroTouchStartX.current = e.touches[0]?.clientX ?? null;
+          }}
+          onTouchEnd={(e) => {
+            if (heroTouchStartX.current == null || heroImages.length <= 1) {
+              heroTouchStartX.current = null;
+              return;
+            }
+            const endX = e.changedTouches[0]?.clientX;
+            if (endX === undefined) {
+              heroTouchStartX.current = null;
+              return;
+            }
+            const delta = endX - heroTouchStartX.current;
+            heroTouchStartX.current = null;
+            if (delta > 60) goHeroPrev();
+            else if (delta < -60) goHeroNext();
           }}
         >
-          <CarouselContent>
-            {((project.hero_images && project.hero_images.length > 0) ? project.hero_images : ["/placeholder.svg"]).map((image, index) => (
-              <CarouselItem key={index}>
+          <div className="absolute inset-0">
+            {heroImages.map((image, index) => (
+              <div
+                key={`${image}-${index}`}
+                className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                  index === heroSlideIndex
+                    ? "z-10 opacity-100"
+                    : "z-0 opacity-0"
+                }`}
+                aria-hidden={index !== heroSlideIndex}
+              >
                 <div className="relative h-[90vh]">
                   <img
                     src={image || "/placeholder.svg"}
                     alt={`${project.title} - Image ${index + 1}`}
-                    className="w-full h-full object-cover"
+                    className="h-full w-full object-cover"
+                    style={{ pointerEvents: "none" }}
                     loading={index === 0 ? "eager" : "lazy"}
                   />
-                  <div className="absolute inset-0 bg-black/30" />
+                  <div className="absolute inset-0 bg-black/20 z-20" />
                 </div>
-              </CarouselItem>
+              </div>
             ))}
-          </CarouselContent>
-          <CarouselPrevious className="left-6" />
-          <CarouselNext className="right-6" />
-        </Carousel>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            disabled={heroImages.length <= 1}
+            onClick={goHeroPrev}
+            className="absolute left-6 top-1/2 z-40 h-8 w-4 -translate-y-1/2 rounded-none opacity-80 hover:opacity-100 disabled:pointer-events-none"
+            aria-label="Previous slide"
+          >
+            <FiChevronLeft />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            disabled={heroImages.length <= 1}
+            onClick={goHeroNext}
+            className="absolute right-6 top-1/2 z-40 h-8 w-4 -translate-y-1/2 rounded-none opacity-80 hover:opacity-100 disabled:pointer-events-none"
+            aria-label="Next slide"
+          >
+            <FiChevronRight />
+          </Button>
+        </div>
 
         {/* Project Name Overlay */}
-        <div className="absolute bottom-4 left-8 text-white">
+        <div className="absolute bottom-4 left-8 text-white z-30">
           <h1 className="text-4xl md:text-6xl font-bold mb-2">
             {project.title}
           </h1>
@@ -284,11 +386,23 @@ export default function ProjectDetailsPage() {
 
               {project.details && project.details.length > 0 && (
                 <>
-                  <h3 className="text-xl font-semibold mb-4">Technical Details</h3>
+                  <h3 className="text-xl font-semibold mb-4">
+                    Technical Details
+                  </h3>
                   <ul className="space-y-2">
                     {project.details.map((detail, index) => {
-                      const key = typeof detail === 'object' && detail !== null && 'key' in detail ? detail.key : `Detail ${index + 1}`;
-                      const value = typeof detail === 'object' && detail !== null && 'value' in detail ? detail.value : String(detail);
+                      const key =
+                        typeof detail === "object" &&
+                        detail !== null &&
+                        "key" in detail
+                          ? detail.key
+                          : `Detail ${index + 1}`;
+                      const value =
+                        typeof detail === "object" &&
+                        detail !== null &&
+                        "value" in detail
+                          ? detail.value
+                          : String(detail);
                       return (
                         <li key={index} className="flex items-start gap-3">
                           <div className="w-1 h-1 bg-accent rounded-full mt-1 flex-shrink-0" />
@@ -312,7 +426,10 @@ export default function ProjectDetailsPage() {
                 <CardContent className="p-6">
                   <div className="space-y-4">
                     {project.professionals.map((professional) => (
-                      <div key={professional.id} className="flex items-center gap-3">
+                      <div
+                        key={professional.id}
+                        className="flex items-center gap-3"
+                      >
                         {professional.photo && (
                           <img
                             src={professional.photo}
@@ -359,9 +476,9 @@ export default function ProjectDetailsPage() {
                     Budget
                   </TypographyH3>
                   <p className="text-muted-foreground">
-                    {new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: 'SLL',
+                    {new Intl.NumberFormat("en-US", {
+                      style: "currency",
+                      currency: "SLL",
                       minimumFractionDigits: 0,
                     }).format(project.budget)}
                   </p>
@@ -376,9 +493,7 @@ export default function ProjectDetailsPage() {
                   <TypographyH3 className=" text-2xl font-semibold mb-1">
                     Duration
                   </TypographyH3>
-                  <p className="text-muted-foreground">
-                    {project.duration}
-                  </p>
+                  <p className="text-muted-foreground">{project.duration}</p>
                 </CardContent>
               </Card>
             )}
@@ -391,32 +506,82 @@ export default function ProjectDetailsPage() {
                     Team
                   </TypographyH3>
                   <p className="text-muted-foreground">
-                    {project.professionals_count} professional{project.professionals_count !== 1 ? "s" : ""}
+                    {project.professionals_count} professional
+                    {project.professionals_count !== 1 ? "s" : ""}
                   </p>
                 </CardContent>
               </Card>
             )}
           </div>
 
-          {/* Map Placeholder */}
+          {/* Project location map */}
           <Card>
             <CardHeader>
               <CardTitle>Project Location</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-64 bg-muted rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <FiMapPin className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-muted-foreground">Interactive Map</p>
-                  <p className="text-sm text-muted-foreground">
-                    {project.location}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Coordinates: {project.coordinates[0]},{" "}
-                    {project.coordinates[1]}
-                  </p>
-                </div>
-              </div>
+              {(() => {
+                const lat = project.coordinates?.latitude;
+                const lng = project.coordinates?.longitude;
+                const hasValidCoords =
+                  typeof lat === "number" &&
+                  typeof lng === "number" &&
+                  Number.isFinite(lat) &&
+                  Number.isFinite(lng);
+
+                if (hasValidCoords) {
+                  const embedUrl = getProjectMapEmbedUrl(lat, lng);
+                  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+                  return (
+                    <div className="space-y-3">
+                      <div className="relative h-64 w-full overflow-hidden rounded-lg border bg-muted">
+                        <iframe
+                          title={`Map of ${project.title ?? "project"} location`}
+                          src={embedUrl}
+                          className="absolute inset-0 h-full w-full border-0"
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                        />
+                      </div>
+                      {project.location && (
+                        <p className="text-sm text-muted-foreground">
+                          {project.location}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        {lat.toFixed(5)}, {lng.toFixed(5)}
+                      </p>
+                      <a
+                        href={googleMapsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                      >
+                        <FiExternalLink className="h-4 w-4" />
+                        Open in Google Maps
+                      </a>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="h-64 rounded-lg bg-muted flex items-center justify-center">
+                    <div className="text-center px-4">
+                      <FiMapPin className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-muted-foreground">Map unavailable</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {project.location ??
+                          "No location or coordinates provided."}
+                      </p>
+                      {project.coordinates != null && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Coordinates present but invalid for mapping.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
         </div>
@@ -543,7 +708,11 @@ export default function ProjectDetailsPage() {
                       </p>
                     )}
                     <Link to={`/profiles/${professional.id}`}>
-                      <Button variant="outline" size="sm" className="w-[80%] h-6">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-[80%] h-6"
+                      >
                         View Profile
                         <FiExternalLink className="ml-2 w-2 h-2" />
                       </Button>
@@ -558,11 +727,23 @@ export default function ProjectDetailsPage() {
         {/* Technical Details */}
         {project.details && project.details.length > 0 && (
           <div className="animate-section">
-            <h2 className="text-3xl font-bold mb-8">Technical Specifications</h2>
+            <h2 className="text-3xl font-bold mb-8">
+              Technical Specifications
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {project.details.map((detail, index) => {
-                const key = typeof detail === 'object' && detail !== null && 'key' in detail ? detail.key : `Specification ${index + 1}`;
-                const value = typeof detail === 'object' && detail !== null && 'value' in detail ? detail.value : String(detail);
+                const key =
+                  typeof detail === "object" &&
+                  detail !== null &&
+                  "key" in detail
+                    ? detail.key
+                    : `Specification ${index + 1}`;
+                const value =
+                  typeof detail === "object" &&
+                  detail !== null &&
+                  "value" in detail
+                    ? detail.value
+                    : String(detail);
                 return (
                   <Card key={index}>
                     <CardHeader>
@@ -580,38 +761,15 @@ export default function ProjectDetailsPage() {
 
         {/* Call-to-Action Section */}
         <div className="animate-section">
-          {/* <Card className="bg-accent/5 border-accent/20">
-            <CardContent className="p-8 text-center">
-              <h2 className="text-2xl font-bold mb-4">
-                Interested in a Similar Project?
-              </h2>
-              <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                Contact SAAS today to discuss your architectural needs and get a
-                free consultation for your next project.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="bg-accent hover:bg-accent/90">
-                  <FiPhone className="mr-2" />
-                  Contact SAAS
-                </Button>
-                <Button size="lg" variant="outline">
-                  <FiMail className="mr-2" />
-                  Request Free Estimation
-                </Button>
-              </div>
-            </CardContent>
-          </Card> */}
-
           <CTASection
             title="Ready to Start Your Project?"
-            description="Contact SAAS today to discuss your architectural needs and get a
-                free consultation for your next project."
-            primaryButtonText="Contact SAAS"
-            secondaryButtonText="Request Free Estimation"
+            description="Get in touch for your next architectural project or just to make a general enquiry. Let's build something amazing together."
+            primaryButtonText="Chat on WhatsApp"
+            secondaryButtonText="Call for an Appointment"
             primaryButtonLink="/contact"
             secondaryButtonLink="/contact"
             primaryButtonIcon={<FiPhone className="mr-2" />}
-            secondaryButtonIcon={<FiMail className="mr-2" />}
+            secondaryButtonIcon={<FiPhoneCall className="mr-2" />}
             className="-mx-12"
           />
         </div>
@@ -700,22 +858,6 @@ export default function ProjectDetailsPage() {
             ))}
           </div>
         </div> */}
-      </div>
-
-      {/* Fixed Contact Button */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <Button
-          size="lg"
-          className="rounded-full bg-green-600 hover:bg-green-700 text-white shadow-lg transition-all duration-300 hover:w-auto w-14 h-14 group"
-          asChild
-        >
-          <a href="tel:+23280126121">
-            <FiPhone className="h-6 w-6 group hover:mr-2 transition-all duration-300" />
-            <span className=" hidden group-hover:block opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap">
-              Contact
-            </span>
-          </a>
-        </Button>
       </div>
     </div>
   );

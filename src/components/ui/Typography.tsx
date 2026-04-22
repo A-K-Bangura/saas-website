@@ -11,7 +11,7 @@ export function TypographyH1({ children, className }: TypographyProps) {
     <h1
       className={cn(
         "text-3xl font-semibold tracking-tight text-balance",
-        className
+        className,
       )}
     >
       {children}
@@ -23,8 +23,8 @@ export function TypographyH2({ children, className }: TypographyProps) {
   return (
     <h2
       className={cn(
-        "text-2xl font-semibold tracking-tight text-balance",
-        className
+        "text-2xl lg:text-5xl font-semibold tracking-tight text-balance",
+        className,
       )}
     >
       {children}
@@ -36,8 +36,8 @@ export function TypographyH3({ children, className }: TypographyProps) {
   return (
     <h3
       className={cn(
-        "text-xl font-semibold tracking-tight text-balance",
-        className
+        "text-xl lg:text-2xl font-semibold tracking-tight text-balance",
+        className,
       )}
     >
       {children}
@@ -49,8 +49,8 @@ export function TypographyH4({ children, className }: TypographyProps) {
   return (
     <h4
       className={cn(
-        "text-lg font-semibold tracking-tight text-balance",
-        className
+        "text-lg lg:text-xl font-semibold tracking-tight text-balance",
+        className,
       )}
     >
       {children}
@@ -69,7 +69,7 @@ export function TypographyLead({ children, className }: TypographyProps) {
     <p
       className={cn(
         "text-lg text-muted-foreground leading-relaxed text-pretty",
-        className
+        className,
       )}
     >
       {children}

@@ -52,6 +52,12 @@ export function ProductCard({ product, onAddToWishlist }: ProductCardProps) {
     onAddToWishlist?.(product.id);
   };
 
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/store/product/${product.id}`);
+  };
+
   const price = product.effective_price;
   const hasDiscount = product.sale_price && product.sale_price < product.price;
   const isInStock = product.in_stock;
@@ -131,23 +137,36 @@ export function ProductCard({ product, onAddToWishlist }: ProductCardProps) {
               </div>
             </div>
 
-            <Button
-              onClick={handleAddToCart}
-              disabled={!isInStock || isAdding}
-              className="w-full"
-              size="sm"
-            >
-              {isAdding ? (
-                "Adding..."
-              ) : !isInStock ? (
-                "Out of Stock"
-              ) : (
-                <>
-                  <FiShoppingCart className="mr-2" />
-                  Add to Cart
-                </>
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={handleAddToCart}
+                disabled={!isInStock || isAdding}
+                className="w-full"
+                size="sm"
+              >
+                {isAdding ? (
+                  "Adding..."
+                ) : !isInStock ? (
+                  "Out of Stock"
+                ) : (
+                  <>
+                    <FiShoppingCart className="mr-2" />
+                    Add to Cart
+                  </>
+                )}
+              </Button>
+              {isInStock && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={handleBuyNow}
+                >
+                  Buy Now
+                </Button>
               )}
-            </Button>
+            </div>
           </CardContent>
         </Card>
       </Link>

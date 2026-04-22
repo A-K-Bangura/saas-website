@@ -18,15 +18,20 @@ import {
 import { Skeleton } from "@/src/components/ui/Skeleton";
 import { useGSAPFadeIn } from "@/src/hooks/use-gsap-fade-in";
 import { useToast } from "@/src/hooks/use-toast";
-import { ApiError } from "@/src/lib/api";
+import { ApiError, api, type CouponValidation } from "@/src/lib/api";
+import { isAuthenticated } from "@/src/lib/auth";
 
 export default function CartPage() {
   const { cart, isLoading, updateItem, removeItem } = useCart();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponValidation | null>(
+    null,
+  );
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [quantityInputs, setQuantityInputs] = useState<Record<number, string>>(
-    {}
+    {},
   );
   const cartRef = useGSAPFadeIn({ y: 20, duration: 0.6 });
 
@@ -48,6 +53,13 @@ export default function CartPage() {
       });
     }
   }, [cart?.items]); // Update when cart items change
+
+  useEffect(() => {
+    const storedCouponCode = sessionStorage.getItem("checkout_coupon_code");
+    if (storedCouponCode) {
+      setCouponCode(storedCouponCode);
+    }
+  }, []);
 
   const handleQuantityChange = async (itemId: number, newQuantity: number) => {
     if (newQuantity <= 0) {
@@ -136,7 +148,7 @@ export default function CartPage() {
 
   const handleQuantityInputBlur = async (
     itemId: number,
-    currentQuantity: number
+    currentQuantity: number,
   ) => {
     const inputValue = quantityInputs[itemId] || currentQuantity.toString();
     const numericValue = parseInt(inputValue, 10);
@@ -160,7 +172,7 @@ export default function CartPage() {
   const handleQuantityInputKeyDown = async (
     e: React.KeyboardEvent<HTMLInputElement>,
     itemId: number,
-    currentQuantity: number
+    currentQuantity: number,
   ) => {
     if (e.key === "Enter") {
       e.currentTarget.blur();
@@ -170,6 +182,51 @@ export default function CartPage() {
       if (!isNaN(numericValue) && numericValue > 0) {
         await handleQuantityChange(itemId, numericValue);
       }
+    }
+  };
+
+  const handleApplyCoupon = async () => {
+    const code = couponCode.trim();
+    if (!code) {
+      toast({
+        variant: "destructive",
+        title: "Coupon required",
+        description: "Please enter a coupon code.",
+      });
+      return;
+    }
+
+    if (!isAuthenticated()) {
+      toast({
+        variant: "destructive",
+        title: "Login required",
+        description: "Please login to apply a coupon.",
+      });
+      return;
+    }
+
+    try {
+      setIsApplyingCoupon(true);
+      const result = await api.validateCoupon(code);
+      setAppliedCoupon(result);
+      sessionStorage.setItem("checkout_coupon_code", result.coupon_code);
+      toast({
+        title: "Coupon applied",
+        description: `${result.coupon_code} applied successfully.`,
+      });
+    } catch (error) {
+      setAppliedCoupon(null);
+      sessionStorage.removeItem("checkout_coupon_code");
+      toast({
+        variant: "destructive",
+        title: "Coupon invalid",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Could not apply coupon. Please try again.",
+      });
+    } finally {
+      setIsApplyingCoupon(false);
     }
   };
 
@@ -213,9 +270,16 @@ export default function CartPage() {
     );
   }
 
+  const summarySubtotal = cart.summary.subtotal;
+  const discountAmount =
+    appliedCoupon && appliedCoupon.subtotal === summarySubtotal
+      ? appliedCoupon.discount_amount
+      : 0;
+  const totalExcludingDelivery = Math.max(summarySubtotal - discountAmount, 0);
+
   return (
     <div className="min-h-screen bg-background">
-      <Section>
+      <Section className="!pt-2">
         <Container>
           <TypographyH1 className="mb-8">Shopping Cart</TypographyH1>
 
@@ -292,7 +356,7 @@ export default function CartPage() {
                               handleQuantityInputKeyDown(
                                 e,
                                 item.id,
-                                item.quantity
+                                item.quantity,
                               )
                             }
                             className="w-16 text-center font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -346,20 +410,21 @@ export default function CartPage() {
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>Le {cart.summary.subtotal.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Delivery</span>
-                    <span>
-                      {cart.summary.delivery_charge === 0 ? (
-                        <span className="text-accent">Free</span>
-                      ) : (
-                        `Le ${cart.summary.delivery_charge.toFixed(2)}`
-                      )}
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    Delivery&nbsp;fee<span className="text-red-500">*</span>
+                    <span className="text-muted-foreground">
+                      &nbsp;based on location and quantity (negotiated after
+                      order placement)
                     </span>
                   </div>
                   <div className="border-t pt-3 flex justify-between font-semibold">
-                    <span>Total</span>
-                    <span>Le {cart.summary.total.toFixed(2)}</span>
+                    <span>Total (excl. delivery)</span>
+                    <span>Le {totalExcludingDelivery.toFixed(2)}</span>
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    Note: Delivery fee is negotiated after order placement and
+                    is not included in the total shown above.
+                  </p>
                 </div>
 
                 <div className="mb-6">
@@ -369,14 +434,39 @@ export default function CartPage() {
                     onChange={(e) => setCouponCode(e.target.value)}
                     className="mb-2"
                   />
-                  <Button variant="outline" className="w-full" size="sm">
-                    Apply Coupon
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    size="sm"
+                    onClick={handleApplyCoupon}
+                    disabled={isApplyingCoupon}
+                  >
+                    {isApplyingCoupon ? "Applying..." : "Apply Coupon"}
                   </Button>
                 </div>
 
+                {appliedCoupon && (
+                  <div className="mb-4 rounded-md border bg-muted/40 p-3 text-sm">
+                    <p className="font-medium">
+                      Coupon {appliedCoupon.coupon_code} applied
+                    </p>
+                    <p className="text-muted-foreground">
+                      Discount: Le {appliedCoupon.discount_amount.toFixed(2)}
+                    </p>
+                  </div>
+                )}
+
                 <Button
                   className="w-full mb-4"
-                  onClick={() => navigate("/checkout")}
+                  onClick={() =>
+                    navigate(
+                      `/checkout${
+                        appliedCoupon?.coupon_code
+                          ? `?coupon=${encodeURIComponent(appliedCoupon.coupon_code)}`
+                          : ""
+                      }`,
+                    )
+                  }
                 >
                   Proceed to Checkout
                   <FiArrowRight className="ml-2" />

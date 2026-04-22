@@ -14,7 +14,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/src/components/ui/Tooltip";
-import { api, type Product, type Category } from "@/src/lib/api";
+import { api, type Product, type Category, type Vendor } from "@/src/lib/api";
 import { useCart } from "@/src/hooks/useCart";
 import {
   FiChevronLeft,
@@ -23,11 +23,14 @@ import {
   FiHeart,
 } from "react-icons/fi";
 import { useGSAPFadeIn } from "@/src/hooks/use-gsap-fade-in";
+import storeHeroImage from "@/src/assets/hero_images/store.png";
 
 export default function StoreListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -44,7 +47,7 @@ export default function StoreListPage() {
     : 0;
   const priceMax = searchParams.get("price_max")
     ? Number(searchParams.get("price_max"))
-    : 1000;
+    : 50000;
   const inStock = searchParams.get("in_stock") === "true";
   const sortBy = searchParams.get("sort") || "popularity";
 
@@ -52,6 +55,7 @@ export default function StoreListPage() {
 
   useEffect(() => {
     loadCategories();
+    loadVendors();
   }, []);
 
   useEffect(() => {
@@ -65,7 +69,25 @@ export default function StoreListPage() {
     inStock,
     sortBy,
     currentPage,
+    categories,
+    vendors,
   ]);
+
+  useEffect(() => {
+    if (!vendor) {
+      setSelectedVendor(null);
+      return;
+    }
+
+    const vendorFromList = vendors.find((item) => item.slug === vendor);
+    if (!vendorFromList) {
+      setSelectedVendor(null);
+      return;
+    }
+
+    setSelectedVendor(vendorFromList);
+    void loadVendorDetails(vendorFromList.id);
+  }, [vendor, vendors]);
 
   // Scroll detection for showing/hiding icons
   useEffect(() => {
@@ -100,6 +122,30 @@ export default function StoreListPage() {
     }
   };
 
+  const loadVendors = async () => {
+    try {
+      const response = await api.getVendors({
+        include_empty: false,
+        sort_by: "name",
+        sort_order: "asc",
+        per_page: 50,
+      });
+      setVendors(response.data);
+    } catch (error) {
+      console.error("Failed to load vendors:", error);
+      setVendors([]);
+    }
+  };
+
+  const loadVendorDetails = async (vendorId: number) => {
+    try {
+      const details = await api.getVendor(vendorId);
+      setSelectedVendor(details);
+    } catch (error) {
+      console.error("Failed to load vendor details:", error);
+    }
+  };
+
   const loadProducts = async () => {
     setIsLoading(true);
     try {
@@ -112,18 +158,49 @@ export default function StoreListPage() {
         }
       }
 
+      const selectedVendorId = vendor
+        ? vendors.find((item) => item.slug === vendor)?.id
+        : undefined;
+
+      const sortMap: Record<
+        string,
+        { sort_by?: string; sort_order?: "asc" | "desc" }
+      > = {
+        popularity: {},
+        "price-asc": { sort_by: "price", sort_order: "asc" },
+        "price-desc": { sort_by: "price", sort_order: "desc" },
+        newest: { sort_by: "created_at", sort_order: "desc" },
+        rating: {},
+      };
+      const sortParams = sortMap[sortBy] || {};
+
       const response = await api.getProducts({
         search: search || undefined,
         category: category || undefined, // Keep for client-side filtering fallback
         category_id: categoryId,
+        vendor_id: selectedVendorId,
         min_price: priceMin > 0 ? priceMin : undefined,
-        max_price: priceMax < 1000 ? priceMax : undefined,
+        max_price: priceMax < 50000 ? priceMax : undefined,
         in_stock: inStock || undefined,
         is_marketplace: true, // Filter for marketplace products
+        sort_by: sortParams.sort_by,
+        sort_order: sortParams.sort_order,
         page: currentPage,
         per_page: 12,
       });
-      setProducts(response.data);
+
+      let productData = response.data;
+      if (sortBy === "rating") {
+        productData = [...productData].sort(
+          (a, b) => (b.rating || 0) - (a.rating || 0),
+        );
+      } else if (sortBy === "popularity") {
+        productData = [...productData].sort(
+          (a, b) => (b.reviews_count || 0) - (a.reviews_count || 0),
+        );
+      }
+
+      setProducts(productData);
       setTotalPages(response.meta.last_page);
     } catch (error) {
       console.error("Failed to load products:", error);
@@ -135,7 +212,7 @@ export default function StoreListPage() {
 
   const updateSearchParams = (
     key: string,
-    value: string | number | boolean
+    value: string | number | boolean,
   ) => {
     const params = new URLSearchParams(searchParams.toString());
     if (value === "" || value === false || value === 0) {
@@ -160,11 +237,16 @@ export default function StoreListPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Section
-        className="bg-gradient-to-b from-background to-muted/30"
-        padding="xl"
-      >
-        <Container>
+      <Section className="relative overflow-hidden" padding="xl">
+        <div className="absolute inset-0">
+          <img
+            src={storeHeroImage}
+            alt="Store hero background"
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-primary/30" />
+        </div>
+        <Container className="relative z-10">
           <div className="relative">
             {/* Cart and Wishlist Icons - Fixed Top Right (Scroll-aware) */}
             <div
@@ -215,19 +297,72 @@ export default function StoreListPage() {
               </Tooltip>
             </div>
 
-            <TypographyH1 className="text-center mb-4">
-              Marketplace
-            </TypographyH1>
-            <p className="text-center text-muted-foreground max-w-2xl mx-auto">
-              Browse our wide selection of construction materials, tools, and
-              supplies.
+            <TypographyH2 className="text-center mb-4 text-secondary-foreground">
+              Online Store
+            </TypographyH2>
+            <p className="text-center text-xl font-semibold text-muted max-w-2xl mx-auto">
+              Browse our wide selection of construction materials, tools,
+              supplies, finishings and more. Place an order and have it
+              delivered to your doorstep.
             </p>
           </div>
         </Container>
       </Section>
 
-      <Section>
+      <Section className="!pt-6">
         <Container>
+          {/* Vendors Bar - Horizontal Scrollable */}
+          <div className="mb-6">
+            <div className="w-full overflow-x-auto scrollbar-hide">
+              <div className="flex min-w-max items-start pt-2 gap-4 pb-2">
+                <button
+                  type="button"
+                  onClick={() => updateSearchParams("vendor", "")}
+                  className={`flex w-20 flex-col items-center gap-2 transition-all ${
+                    !vendor ? "opacity-100" : "opacity-70 hover:opacity-100"
+                  }`}
+                >
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full border bg-muted text-xs font-semibold">
+                    All
+                  </div>
+                  <span className="line-clamp-2 text-center text-xs">
+                    All Vendors
+                  </span>
+                </button>
+                {vendors.map((vendorItem) => (
+                  <button
+                    key={vendorItem.id}
+                    type="button"
+                    onClick={() =>
+                      updateSearchParams("vendor", vendorItem.slug)
+                    }
+                    className={`flex w-20 flex-col items-center gap-2 transition-all ${
+                      vendor === vendorItem.slug
+                        ? "opacity-100"
+                        : "opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    <div
+                      className={`h-16 w-16 overflow-hidden rounded-full border bg-muted ${
+                        vendor === vendorItem.slug ? "ring-2 ring-accent" : ""
+                      }`}
+                    >
+                      <img
+                        src={vendorItem.logo || "/placeholder.svg"}
+                        alt={vendorItem.name}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                    <span className="line-clamp-2 text-center text-xs">
+                      {vendorItem.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
           {/* Categories Bar - Horizontal Scrollable */}
           <div className="mb-6">
             <CategoryBar categories={categories} currentCategory={category} />
@@ -262,13 +397,59 @@ export default function StoreListPage() {
                   sortBy={sortBy}
                   onSortChange={(value) => updateSearchParams("sort", value)}
                   onClearFilters={clearFilters}
-                  maxPrice={1000}
+                  maxPrice={50000}
+                  vendorOptions={vendors.map((vendorItem) => ({
+                    slug: vendorItem.slug,
+                    name: vendorItem.name,
+                  }))}
                 />
               </div>
             </div>
 
             {/* Main Content */}
             <div className="lg:col-span-9">
+              {selectedVendor && (
+                <div className="mb-4 rounded-lg border bg-card p-4">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <img
+                      src={selectedVendor.logo || "/placeholder.svg"}
+                      alt={selectedVendor.name}
+                      className="h-16 w-16 rounded-full border object-cover"
+                      loading="lazy"
+                    />
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold">
+                        {selectedVendor.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedVendor.contact_email ||
+                          "No contact email provided"}
+                        {selectedVendor.phone
+                          ? ` · ${selectedVendor.phone}`
+                          : ""}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {selectedVendor.active_products_count ?? 0} active
+                        product
+                        {(selectedVendor.active_products_count ?? 0) === 1
+                          ? ""
+                          : "s"}
+                        {typeof selectedVendor.rating === "number"
+                          ? ` · Rating ${selectedVendor.rating.toFixed(1)}`
+                          : ""}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => updateSearchParams("vendor", "")}
+                    >
+                      Clear Vendor
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* Mobile Filters Toggle */}
               <div className="lg:hidden mb-4">
                 <Button
@@ -308,7 +489,11 @@ export default function StoreListPage() {
                     sortBy={sortBy}
                     onSortChange={(value) => updateSearchParams("sort", value)}
                     onClearFilters={clearFilters}
-                    maxPrice={1000}
+                    maxPrice={50000}
+                    vendorOptions={vendors.map((vendorItem) => ({
+                      slug: vendorItem.slug,
+                      name: vendorItem.name,
+                    }))}
                   />
                 </div>
               )}

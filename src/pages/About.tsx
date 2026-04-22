@@ -21,6 +21,7 @@ import {
 } from "../components/ui/Typography";
 import { Card, CardContent } from "../components/ui/Card";
 import { CTASection } from "../components/ui/CtaSection";
+import aboutHeroImage from "../assets/hero_images/about.png";
 
 const values = [
   {
@@ -52,35 +53,37 @@ const values = [
 const achievements = [
   {
     icon: FiTrendingUp,
-    title: "50+ Projects",
+    title: "20+ Projects",
     description: "Successfully completed across Sierra Leone",
   },
   {
     icon: FiUsers,
-    title: "100+ Families",
+    title: "10+ Families",
     description: "Now living in sustainable homes",
   },
-  {
-    icon: FiAward,
-    title: "5 Awards",
-    description: "For sustainable architecture excellence",
-  },
+  // {
+  //   icon: FiAward,
+  //   title: "5 Awards",
+  //   description: "For sustainable architecture excellence",
+  // },
 ];
 
 export default function AboutPage() {
   return (
     <div>
       {/* Hero Section */}
-      <Section
-        className="bg-gradient-to-b from-background to-muted/30"
-        padding="xl"
-      >
+      <Section className="relative overflow-hidden" padding="xl">
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${aboutHeroImage})` }}
+        />
+        <div className="absolute inset-0 bg-primary/30" />
         <Container>
-          <div className="max-w-4xl mx-auto text-center">
-            <TypographyH1 className="mb-6">
+          <div className="relative z-10 max-w-4xl text-secondary-foreground mx-auto text-center">
+            <TypographyH1 className="mb-6 font-bold lg:text-6xl">
               Building a Sustainable Future for Sierra Leone
             </TypographyH1>
-            <TypographyP className="text-xl text-muted-foreground leading-relaxed">
+            <TypographyP className="text-xl font-semibold text-muted leading-relaxed">
               SAAS (Sustainable and Affordable Architectural Solutions) is
               dedicated to transforming Sierra Leone's built environment through
               innovative, eco-friendly, and cost-effective architectural

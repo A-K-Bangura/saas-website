@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -27,7 +27,11 @@ import {
 } from "@/src/components/ui/Select";
 import { RadioGroup, RadioGroupItem } from "@/src/components/ui/RadioGroup";
 import { useCart } from "@/src/hooks/useCart";
-import { api, type CheckoutRequest } from "@/src/lib/api";
+import {
+  api,
+  type CheckoutRequest,
+  type CouponValidation,
+} from "@/src/lib/api";
 import { getUser, isAuthenticated } from "@/src/lib/auth";
 import { Skeleton } from "@/src/components/ui/Skeleton";
 import { useToast } from "@/src/hooks/use-toast";
@@ -41,9 +45,8 @@ const checkoutSchema = z.object({
   phone: z.string().min(10, "Phone number is required"),
   address1: z.string().min(5, "Address is required"),
   address2: z.string().optional(),
-  post_code: z.string().min(4, "Postal code is required"),
   country: z.string().min(2, "Country is required"),
-  payment_method: z.enum(["cod", "stripe", "paypal"]),
+  payment_method: z.enum(["cod"]),
 });
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
@@ -51,13 +54,20 @@ type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 export default function CheckoutPage() {
   const { cart, isLoading: cartLoading } = useCart();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(true);
   const [orderSuccess, setOrderSuccess] = useState<{
     orderNumber: string;
   } | null>(null);
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponValidation | null>(
+    null,
+  );
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const formRef = useGSAPFadeIn({ y: 20, duration: 0.6 });
+  const contactPhone = import.meta.env.VITE_CONTACT_PHONE?.toString().trim() || "";
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -68,11 +78,66 @@ export default function CheckoutPage() {
       phone: "",
       address1: "",
       address2: "",
-      post_code: "",
       country: "Sierra Leone",
       payment_method: "cod",
     },
   });
+
+  const applyCoupon = async (codeInput?: string, silent = false) => {
+    if (!cart || cart.items.length === 0) return;
+    const code = (codeInput ?? couponCode).trim();
+
+    if (!code) {
+      if (!silent) {
+        toast({
+          variant: "destructive",
+          title: "Coupon required",
+          description: "Please enter a coupon code.",
+        });
+      }
+      return;
+    }
+
+    if (!isAuthenticated()) {
+      if (!silent) {
+        toast({
+          variant: "destructive",
+          title: "Login required",
+          description: "Please login to apply a coupon.",
+        });
+      }
+      return;
+    }
+
+    try {
+      setIsApplyingCoupon(true);
+      const result = await api.validateCoupon(code);
+      setAppliedCoupon(result);
+      setCouponCode(result.coupon_code);
+      sessionStorage.setItem("checkout_coupon_code", result.coupon_code);
+      if (!silent) {
+        toast({
+          title: "Coupon applied",
+          description: `${result.coupon_code} applied successfully.`,
+        });
+      }
+    } catch (error) {
+      setAppliedCoupon(null);
+      sessionStorage.removeItem("checkout_coupon_code");
+      if (!silent) {
+        toast({
+          variant: "destructive",
+          title: "Coupon invalid",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Could not validate coupon.",
+        });
+      }
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
 
   // Load checkout details on mount to pre-fill form
   useEffect(() => {
@@ -93,7 +158,7 @@ export default function CheckoutPage() {
             // We'll fall back to stored user data
             console.warn(
               "Failed to load checkout details from API, using stored user data:",
-              error
+              error,
             );
           }
         }
@@ -150,6 +215,22 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const couponFromQuery = searchParams.get("coupon");
+    const couponFromStorage = sessionStorage.getItem("checkout_coupon_code");
+    const initialCoupon = couponFromQuery || couponFromStorage || "";
+    if (initialCoupon) {
+      setCouponCode(initialCoupon);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!cart || cart.items.length === 0) return;
+    if (!couponCode) return;
+    void applyCoupon(couponCode, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart?.summary.subtotal, cart?.summary.quantity]);
+
   const onSubmit = async (data: CheckoutFormValues) => {
     if (!cart) return;
 
@@ -162,9 +243,10 @@ export default function CheckoutPage() {
         phone: data.phone,
         address1: data.address1,
         address2: data.address2,
-        post_code: data.post_code,
+        post_code: "1234",
         country: data.country,
         payment_method: data.payment_method,
+        coupon_code: appliedCoupon?.coupon_code,
       };
 
       const response = await api.checkout(checkoutData);
@@ -194,7 +276,7 @@ export default function CheckoutPage() {
         if (!orderNumber) {
           console.error(
             "Order number is missing from response:",
-            response.data
+            response.data,
           );
           toast({
             variant: "destructive",
@@ -216,19 +298,37 @@ export default function CheckoutPage() {
           description: `Your order has been received. Order Number: ${orderNumber}`,
         });
 
+        // Notify central contact on WhatsApp after order creation.
+        if (contactPhone) {
+          const normalizedPhone = contactPhone.replace(/[^\d]/g, "");
+          const orderTotalExcludingDelivery = (
+            cart.summary.subtotal - (appliedCoupon?.discount_amount || 0)
+          ).toFixed(2);
+          const whatsappMessage =
+            `New order created from checkout.%0A` +
+            `Order Number: ${orderNumber}%0A` +
+            `Customer: ${data.first_name} ${data.last_name}%0A` +
+            `Customer Phone: ${data.phone}%0A` +
+            `Address: ${data.address1}${data.address2 ? `, ${data.address2}` : ""}, ${data.country}%0A` +
+            `Items: ${cart.summary.quantity}%0A` +
+            `Total (excl. delivery): Le ${orderTotalExcludingDelivery}%0A` +
+            `Delivery: Negotiated after order placement`;
+
+          window.open(
+            `https://wa.me/${normalizedPhone}?text=${whatsappMessage}`,
+            "_blank",
+            "noopener,noreferrer",
+          );
+        } else {
+          console.warn(
+            "VITE_CONTACT_PHONE is not configured. Skipping WhatsApp notification.",
+          );
+        }
+
         // Redirect to order details page after a short delay
         setTimeout(() => {
           navigate(`/orders/${orderId}`);
         }, 500);
-
-        // Handle payment redirect for stripe/paypal
-        if (
-          data.payment_method === "stripe" ||
-          data.payment_method === "paypal"
-        ) {
-          // In a real app, you would redirect to payment URL
-          // For now, we'll just show the success message
-        }
       } else {
         // Handle case where response is not successful or data is missing
         toast({
@@ -363,7 +463,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Section>
+      <Section className="!pt-2">
         <Container>
           <TypographyH1 className="mb-8">Checkout</TypographyH1>
 
@@ -377,7 +477,7 @@ export default function CheckoutPage() {
                     className="space-y-6"
                   >
                     <TypographyH2 className="mb-4">
-                      Shipping Information
+                      Delivery Information
                     </TypographyH2>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -477,20 +577,6 @@ export default function CheckoutPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="post_code"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Postal Code *</FormLabel>
-                            <FormControl>
-                              <Input {...field} disabled={isLoadingDetails} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
                         name="country"
                         render={({ field }) => (
                           <FormItem>
@@ -506,7 +592,7 @@ export default function CheckoutPage() {
 
                     <div className="border-t pt-6">
                       <TypographyH2 className="mb-4">
-                        Payment Method
+                        Payment Options
                       </TypographyH2>
                       <FormField
                         control={form.control}
@@ -529,27 +615,6 @@ export default function CheckoutPage() {
                                     <div className="flex items-center justify-between">
                                       <span>Cash on Delivery (COD)</span>
                                     </div>
-                                  </Label>
-                                </div>
-                                <div className="flex items-center space-x-2 border rounded-md p-4">
-                                  <RadioGroupItem value="stripe" id="stripe" />
-                                  <Label
-                                    htmlFor="stripe"
-                                    className="flex-1 cursor-pointer"
-                                  >
-                                    <div className="flex items-center justify-between">
-                                      <span>Credit/Debit Card (Stripe)</span>
-                                      <FiLock className="w-4 h-4 text-muted-foreground" />
-                                    </div>
-                                  </Label>
-                                </div>
-                                <div className="flex items-center space-x-2 border rounded-md p-4">
-                                  <RadioGroupItem value="paypal" id="paypal" />
-                                  <Label
-                                    htmlFor="paypal"
-                                    className="flex-1 cursor-pointer"
-                                  >
-                                    PayPal
                                   </Label>
                                 </div>
                               </RadioGroup>
@@ -592,6 +657,24 @@ export default function CheckoutPage() {
               <Card className="p-6">
                 <TypographyH2 className="mb-4">Order Summary</TypographyH2>
 
+                <div className="mb-4 space-y-2">
+                  <Input
+                    placeholder="Coupon code"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                  />
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    size="sm"
+                    onClick={() => applyCoupon()}
+                    disabled={isApplyingCoupon}
+                    type="button"
+                  >
+                    {isApplyingCoupon ? "Applying..." : "Apply Coupon"}
+                  </Button>
+                </div>
+
                 <div className="space-y-2 mb-4">
                   {cart.items.map((item) => (
                     <div key={item.id} className="flex justify-between text-sm">
@@ -612,19 +695,38 @@ export default function CheckoutPage() {
                     <span>Le {cart.summary.subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Delivery</span>
-                    <span>
-                      {cart.summary.delivery_charge === 0 ? (
-                        <span className="text-accent">Free</span>
-                      ) : (
-                        `Le ${cart.summary.delivery_charge.toFixed(2)}`
-                      )}
+                    <span className="text-muted-foreground">
+                      Delivery&nbsp;fee<span className="text-red-500">*</span>
+                    </span>
+                    <span className="text-muted-foreground">
+                      &nbsp;based on location and quantity (negotiated after
+                      order placement)
                     </span>
                   </div>
+                  {appliedCoupon && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Coupon ({appliedCoupon.coupon_code})
+                      </span>
+                      <span className="text-accent">
+                        -Le {appliedCoupon.discount_amount.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
                   <div className="border-t pt-2 flex justify-between font-semibold text-lg">
-                    <span>Total</span>
-                    <span>Le {cart.summary.total.toFixed(2)}</span>
+                    <span>Total (excl. delivery)</span>
+                    <span>
+                      Le{" "}
+                      {(
+                        cart.summary.subtotal -
+                        (appliedCoupon?.discount_amount || 0)
+                      ).toFixed(2)}
+                    </span>
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    Note: Delivery fee is negotiated after order placement and
+                    is not included in the total shown above.
+                  </p>
                 </div>
               </Card>
             </div>

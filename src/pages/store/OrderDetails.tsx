@@ -124,7 +124,8 @@ export default function OrderDetailsPage() {
               <FiPackage className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
               <TypographyH2 className="mb-2">Order Not Found</TypographyH2>
               <p className="text-muted-foreground mb-6">
-                The order you're looking for doesn't exist or you don't have permission to view it.
+                The order you're looking for doesn't exist or you don't have
+                permission to view it.
               </p>
               <div className="flex gap-4 justify-center">
                 <Button onClick={() => navigate("/orders")}>
@@ -132,8 +133,8 @@ export default function OrderDetailsPage() {
                   Back to Orders
                 </Button>
                 <Button variant="outline" onClick={() => navigate("/store")}>
-                  <FiShoppingBag className="mr-2" />
-                  Continue Shopping
+                  <FiShoppingBag className="sm:mr-2" />
+                  <span className="hidden sm:inline">Continue Shopping</span>
                 </Button>
               </div>
             </Card>
@@ -145,7 +146,7 @@ export default function OrderDetailsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Section>
+      <Section className="!pt-2">
         <Container>
           <div ref={pageRef}>
             <div className="flex items-center justify-between mb-8">
@@ -164,8 +165,8 @@ export default function OrderDetailsPage() {
                 </p>
               </div>
               <Button onClick={() => navigate("/store")}>
-                <FiShoppingBag className="mr-2" />
-                Continue Shopping
+                <FiShoppingBag className="sm:mr-2" />
+                <span className="hidden sm:inline">Continue Shopping</span>
               </Button>
             </div>
 
@@ -180,37 +181,45 @@ export default function OrderDetailsPage() {
                       <span className="text-muted-foreground">Status</span>
                       <span
                         className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeColor(
-                          order.status
+                          order.status,
                         )}`}
                       >
                         {order.status}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Payment Status</span>
+                      <span className="text-muted-foreground">
+                        Payment Status
+                      </span>
                       <span
                         className={`px-3 py-1 rounded-full text-sm font-medium ${getPaymentStatusBadgeColor(
-                          order.payment_status
+                          order.payment_status,
                         )}`}
                       >
                         {order.payment_status}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Fulfillment Status</span>
+                      <span className="text-muted-foreground">
+                        Fulfillment Status
+                      </span>
                       <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
                         {order.fulfillment_status}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Payment Method</span>
+                      <span className="text-muted-foreground">
+                        Payment Method
+                      </span>
                       <span className="font-medium capitalize">
                         {order.payment_method}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Order Date</span>
-                      <span className="font-medium">{formatDate(order.created_at)}</span>
+                      <span className="font-medium">
+                        {formatDate(order.created_at)}
+                      </span>
                     </div>
                   </div>
                 </Card>
@@ -243,7 +252,8 @@ export default function OrderDetailsPage() {
                               Quantity: {item.quantity}
                             </p>
                             <p className="font-semibold">
-                              {item.product?.currency_symbol || "Le"} {item.amount.toFixed(2)}
+                              {item.product?.currency_symbol || "Le"}{" "}
+                              {item.amount.toFixed(2)}
                             </p>
                           </div>
                         </div>
@@ -254,11 +264,11 @@ export default function OrderDetailsPage() {
                   </div>
                 </Card>
 
-                {/* Shipping Address */}
+                {/* Delivery Address */}
                 <Card className="p-6">
                   <TypographyH2 className="mb-4 flex items-center gap-2">
                     <FiMapPin className="w-5 h-5" />
-                    Shipping Address
+                    Delivery Address
                   </TypographyH2>
                   <div className="space-y-2">
                     <p className="font-medium">
@@ -274,7 +284,8 @@ export default function OrderDetailsPage() {
                       </p>
                     )}
                     <p className="text-muted-foreground">
-                      {order.shipping_address.country} {order.shipping_address.post_code}
+                      {order.shipping_address.country}{" "}
+                      {order.shipping_address.post_code}
                     </p>
                     <div className="flex items-center gap-2 mt-4 text-sm text-muted-foreground">
                       <FiPhone className="w-4 h-4" />
@@ -302,7 +313,9 @@ export default function OrderDetailsPage() {
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Delivery Charge</span>
+                      <span className="text-muted-foreground">
+                        Delivery Charge
+                      </span>
                       <span>
                         {order.delivery_charge === 0 ? (
                           <span className="text-accent">Free</span>
@@ -331,4 +344,3 @@ export default function OrderDetailsPage() {
     </div>
   );
 }
-

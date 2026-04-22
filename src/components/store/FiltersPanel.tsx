@@ -28,6 +28,10 @@ interface FiltersPanelProps {
   onSortChange: (value: string) => void;
   onClearFilters: () => void;
   maxPrice?: number;
+  vendorOptions?: Array<{
+    slug: string;
+    name: string;
+  }>;
 }
 
 export function FiltersPanel({
@@ -44,7 +48,8 @@ export function FiltersPanel({
   sortBy,
   onSortChange,
   onClearFilters,
-  maxPrice = 1000,
+  maxPrice = 50000,
+  vendorOptions = [],
 }: FiltersPanelProps) {
   const hasActiveFilters =
     search ||
@@ -136,11 +141,11 @@ export function FiltersPanel({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Vendors</SelectItem>
-              <SelectItem value="bo-supplies">Bo Supplies</SelectItem>
-              <SelectItem value="freetown-steel">
-                Freetown Steel Works
-              </SelectItem>
-              <SelectItem value="premium-paints">Premium Paints SL</SelectItem>
+              {vendorOptions.map((vendorItem) => (
+                <SelectItem key={vendorItem.slug} value={vendorItem.slug}>
+                  {vendorItem.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -148,7 +153,7 @@ export function FiltersPanel({
         {/* Price Range */}
         <div className="min-w-0">
           <Label className="block">
-            Price Range: ${priceRange[0]} - ${priceRange[1]}
+            Price Range: NLe {priceRange[0]} - NLe {priceRange[1]}
           </Label>
           <Slider
             value={priceRange}

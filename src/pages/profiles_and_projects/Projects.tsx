@@ -24,6 +24,11 @@ import {
 } from "@/src/components/ui/Select";
 import { Link } from "react-router-dom";
 import { api, type Project } from "@/src/lib/api";
+import { Container } from "@/src/components/ui/Container";
+import { Section } from "@/src/components/ui/Section";
+import { TypographyH1, TypographyP } from "@/src/components/ui/Typography";
+import projectsHeroImage from "@/src/assets/hero_images/project.png";
+import { useGSAPFadeIn } from "@/src/hooks/use-gsap-fade-in";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -61,11 +66,19 @@ export default function ProjectsPage() {
 
   const cardsRef = useRef<HTMLDivElement>(null);
   const filtersRef = useRef<HTMLDivElement>(null);
+  const heroRef = useGSAPFadeIn({ y: 20, duration: 0.8 });
 
   // Load projects from API
   useEffect(() => {
     loadProjects();
-  }, [searchTerm, selectedType, selectedLocation, selectedYear, selectedStatus, currentPage]);
+  }, [
+    searchTerm,
+    selectedType,
+    selectedLocation,
+    selectedYear,
+    selectedStatus,
+    currentPage,
+  ]);
 
   const loadProjects = async () => {
     setIsLoading(true);
@@ -85,9 +98,15 @@ export default function ProjectsPage() {
       setTotalCount(response.meta.total);
 
       // Extract unique values for filters
-      const uniqueTypes = Array.from(new Set(response.data.map(p => p.type).filter(Boolean))) as string[];
-      const uniqueLocations = Array.from(new Set(response.data.map(p => p.location).filter(Boolean))) as string[];
-      const uniqueYears = Array.from(new Set(response.data.map(p => p.year?.toString()).filter(Boolean))) as string[];
+      const uniqueTypes = Array.from(
+        new Set(response.data.map((p) => p.type).filter(Boolean)),
+      ) as string[];
+      const uniqueLocations = Array.from(
+        new Set(response.data.map((p) => p.location).filter(Boolean)),
+      ) as string[];
+      const uniqueYears = Array.from(
+        new Set(response.data.map((p) => p.year?.toString()).filter(Boolean)),
+      ) as string[];
 
       setProjectTypes(["All", ...uniqueTypes]);
       setLocations(["All", ...uniqueLocations]);
@@ -117,7 +136,7 @@ export default function ProjectsPage() {
             start: "top 80%",
             toggleActions: "play none none reverse",
           },
-        }
+        },
       );
     }
   }, [projects, isLoading]);
@@ -143,19 +162,31 @@ export default function ProjectsPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-secondary text-secondary-foreground py-16">
-        <div className="container mx-auto px-6 max-w-7xl">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Our Projects
-            </h1>
-            <p className="text-xl text-secondary-foreground/80 max-w-2xl mx-auto">
-              Explore our portfolio of sustainable and innovative architectural
-              projects across Sierra Leone
-            </p>
-          </div>
+
+      <Section className="relative overflow-hidden" padding="xl">
+        <div className="absolute inset-0">
+          <img
+            src={projectsHeroImage}
+            alt="Project estimation workspace"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-background/30" />
         </div>
-      </div>
+        <Container className="relative z-10">
+          <div className="max-w-4xl mx-auto text-center" ref={heroRef}>
+            <div className="flex justify-center mb-6">
+              {/* <div className="p-4 bg-accent/10 rounded-full">
+                <FiBuilding2 className="w-12 h-12 text-accent" />
+              </div> */}
+            </div>
+            <TypographyH1 className="mb-3">Our Projects</TypographyH1>
+            <TypographyP className="text-xl font-semibold text-secondary leading-relaxed max-w-2xl mx-auto">
+              Browse our portfolio of sustainable and innovative architectural
+              projects across Sierra Leone
+            </TypographyP>
+          </div>
+        </Container>
+      </Section>
 
       <div className="container mx-auto px-2 max-w-7xl py-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -548,12 +579,14 @@ export default function ProjectsPage() {
                               {project.year}
                             </div>
                           )}
-                          {project.professionals_count !== undefined && project.professionals_count > 0 && (
-                            <div className="flex items-center gap-1">
-                              <FiStar size={14} className="text-yellow-500" />
-                              {project.professionals_count} professional{project.professionals_count !== 1 ? "s" : ""}
-                            </div>
-                          )}
+                          {project.professionals_count !== undefined &&
+                            project.professionals_count > 0 && (
+                              <div className="flex items-center gap-1">
+                                <FiStar size={14} className="text-yellow-500" />
+                                {project.professionals_count} professional
+                                {project.professionals_count !== 1 ? "s" : ""}
+                              </div>
+                            )}
                         </div>
                       </div>
 
@@ -563,11 +596,14 @@ export default function ProjectsPage() {
                         </p>
                       )}
 
-                    <Button className="w-full transition-all duration-300 hover:scale-105" asChild>
-                      <Link to={`/projects/${project.id}`}>View Details</Link>
-                    </Button>
+                      <Button
+                        className="w-full transition-all duration-300 hover:scale-105"
+                        asChild
+                      >
+                        <Link to={`/projects/${project.id}`}>View Details</Link>
+                      </Button>
 
-                    {/* <div className="flex items-center justify-between">
+                      {/* <div className="flex items-center justify-between">
                       <Button className="transition-all duration-300 hover:scale-105">
                         <Link to={project.id.toString()}>View Details</Link>
                       </Button>
@@ -590,10 +626,10 @@ export default function ProjectsPage() {
                         </div>
                       </div>
                     </div> */}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             )}
 
             {/* No Results */}

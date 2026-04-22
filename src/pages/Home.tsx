@@ -11,24 +11,24 @@ import { BlogPreview } from "../components/sections/home_sections/BlogHome";
 
 const stats = [
   {
-    number: "50+",
+    number: "20+",
     label: "Projects Completed",
     description: "Across Sierra Leone",
   },
   {
     number: "100%",
-    label: "Sustainable Materials",
-    description: "Eco-friendly approach",
+    label: "Reliable Materials",
+    description: "High-grade and affordable",
   },
   {
-    number: "5+",
-    label: "Years Experience",
-    description: "In local construction",
+    number: "50+",
+    label: "Years Cumulative Experience",
+    description: "In construction industry",
   },
   {
-    number: "24/7",
-    label: "Support Available",
-    description: "Project assistance",
+    number: "10+",
+    label: "Trusted Professionals",
+    description: "Certified and reliable",
   },
 ];
 

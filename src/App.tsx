@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import HomePage from "@/src/pages/Home";
 import AboutPage from "@/src/pages/About";
@@ -17,6 +17,7 @@ import React from "react";
 import ProjectDetailsPage from "./pages/profiles_and_projects/ProjectDetails";
 import { Skeleton } from "./components/ui/Skeleton";
 import { Toaster } from "./components/ui/Toaster";
+import { WhatsAppCTA } from "./components/layout/WhatsAppCTA";
 
 // Lazy load service pages
 const ServicesHome = lazy(() => import("./pages/services/ServicesHome"));
@@ -50,9 +51,20 @@ const PageLoader = () => (
   </div>
 );
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [pathname]);
+
+  return null;
+}
+
 export default function App() {
   return (
     <div>
+      <ScrollToTop />
       <Header />
       <main className="min-h-screen">
         <Routes>
@@ -197,6 +209,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
+      <WhatsAppCTA />
       {(() => {
         // Track the current pathname in state and update on route change
         const [currentPath, setCurrentPath] = React.useState(

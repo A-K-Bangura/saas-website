@@ -227,6 +227,23 @@ export interface Category {
   children?: Category[];
 }
 
+export interface Vendor {
+  id: number;
+  name: string;
+  slug: string;
+  contact_email?: string;
+  phone?: string;
+  address?: string;
+  verified?: boolean;
+  rating?: number;
+  logo?: string;
+  active_products_count?: number;
+  total_products_count?: number;
+  total_orders_count?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Professional {
   id: number;
   slug: string;
@@ -293,6 +310,20 @@ export interface ProfessionalReview {
   user: {
     id: number;
     name: string;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductReview {
+  id: number;
+  rate: number;
+  review: string;
+  status?: string;
+  user: {
+    id: number;
+    name: string;
+    email?: string;
   };
   created_at: string;
   updated_at: string;
@@ -378,6 +409,18 @@ export interface CheckoutRequest {
   address2?: string;
   shipping_id?: number;
   payment_method: "cod" | "paypal" | "stripe";
+  coupon_code?: string;
+  coupon?: string;
+}
+
+export interface CouponValidation {
+  coupon_id: number;
+  coupon_code: string;
+  discount_type: "percent" | "fixed";
+  discount_value: number;
+  subtotal: number;
+  discount_amount: number;
+  total_after_discount: number;
 }
 
 export interface Order {
@@ -760,6 +803,8 @@ export const api = {
     in_stock?: boolean;
     is_marketplace?: boolean;
     status?: string;
+    sort_by?: string;
+    sort_order?: "asc" | "desc";
     page?: number;
     per_page?: number;
   }): Promise<{
@@ -793,6 +838,8 @@ export const api = {
     if (params?.is_marketplace !== undefined)
       queryParams.append("is_marketplace", params.is_marketplace.toString());
     if (params?.status) queryParams.append("status", params.status);
+    if (params?.sort_by) queryParams.append("sort_by", params.sort_by);
+    if (params?.sort_order) queryParams.append("sort_order", params.sort_order);
     if (params?.page) queryParams.append("page", params.page.toString());
     if (params?.per_page)
       queryParams.append("per_page", params.per_page.toString());
@@ -860,6 +907,80 @@ export const api = {
 
   async getProduct(idOrSlug: string | number): Promise<Product> {
     return apiFetch<Product>(`/products/${idOrSlug}`);
+  },
+
+  async getVendors(params?: {
+    search?: string;
+    verified?: boolean;
+    include_empty?: boolean;
+    sort_by?: "name" | "rating" | "created_at";
+    sort_order?: "asc" | "desc";
+    per_page?: number;
+    page?: number;
+  }): Promise<{
+    data: Vendor[];
+    meta: {
+      total: number;
+      per_page: number;
+      current_page: number;
+      last_page: number;
+      from?: number;
+      to?: number;
+    };
+    links?: {
+      first?: string;
+      last?: string;
+      prev?: string | null;
+      next?: string | null;
+    };
+  }> {
+    const queryParams = new URLSearchParams();
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.verified !== undefined)
+      queryParams.append("verified", String(params.verified));
+    if (params?.include_empty !== undefined)
+      queryParams.append("include_empty", String(params.include_empty));
+    if (params?.sort_by) queryParams.append("sort_by", params.sort_by);
+    if (params?.sort_order) queryParams.append("sort_order", params.sort_order);
+    if (params?.per_page)
+      queryParams.append("per_page", params.per_page.toString());
+    if (params?.page) queryParams.append("page", params.page.toString());
+
+    const response = await fetch(`${API_BASE_URL}/vendors?${queryParams.toString()}`, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new ApiError("Failed to fetch vendors", response.status);
+    }
+
+    const apiResponse: ApiResponse<Vendor[]> = await response.json();
+    if (!apiResponse.success) {
+      throw new ApiError(
+        apiResponse.message || "Failed to fetch vendors",
+        response.status,
+        apiResponse.errors
+      );
+    }
+
+    return {
+      data: apiResponse.data,
+      meta: apiResponse.meta || {
+        total: apiResponse.data.length,
+        per_page: params?.per_page || 15,
+        current_page: params?.page || 1,
+        last_page: 1,
+        from: 1,
+        to: apiResponse.data.length,
+      },
+      links: apiResponse.links,
+    };
+  },
+
+  async getVendor(idOrSlug: string | number): Promise<Vendor> {
+    return apiFetch<Vendor>(`/vendors/${idOrSlug}`);
   },
 
   // Categories
@@ -1175,6 +1296,95 @@ export const api = {
     );
   },
 
+  async getProductReviews(
+    productId: string | number,
+    params?: {
+      page?: number;
+      per_page?: number;
+    }
+  ): Promise<{
+    data: ProductReview[];
+    meta: {
+      total: number;
+      per_page: number;
+      current_page: number;
+      last_page: number;
+      from?: number;
+      to?: number;
+    };
+    links?: {
+      first?: string;
+      last?: string;
+      prev?: string | null;
+      next?: string | null;
+    };
+  }> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.per_page)
+      queryParams.append("per_page", params.per_page.toString());
+
+    const authHeader = getAuthHeader();
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+    if (authHeader) {
+      headers["Authorization"] = authHeader;
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/products/${productId}/reviews?${queryParams.toString()}`,
+      {
+        headers,
+      }
+    );
+
+    if (response.status === 401) {
+      clearAuth();
+      throw new ApiError("Unauthorized. Please login again.", 401);
+    }
+
+    if (!response.ok) {
+      throw new ApiError("Failed to fetch product reviews", response.status);
+    }
+
+    const apiResponse: ApiResponse<ProductReview[]> = await response.json();
+
+    if (!apiResponse.success) {
+      throw new ApiError(
+        apiResponse.message || "Failed to fetch product reviews",
+        response.status,
+        apiResponse.errors
+      );
+    }
+
+    return {
+      data: apiResponse.data,
+      meta: apiResponse.meta || {
+        total: apiResponse.data.length,
+        per_page: params?.per_page || 15,
+        current_page: params?.page || 1,
+        last_page: 1,
+        from: 1,
+        to: apiResponse.data.length,
+      },
+      links: apiResponse.links,
+    };
+  },
+
+  async submitProductReview(
+    productId: string | number,
+    data: {
+      rate: number;
+      review: string;
+    }
+  ): Promise<ProductReview> {
+    return apiFetch<ProductReview>(`/products/${productId}/reviews`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
   // Projects
   async getProjects(params?: {
     search?: string;
@@ -1382,6 +1592,13 @@ export const api = {
     }
 
     return responseData;
+  },
+
+  async validateCoupon(code: string): Promise<CouponValidation> {
+    return apiFetch<CouponValidation>("/coupons/validate", {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    });
   },
 
   // Orders

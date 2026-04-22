@@ -9,7 +9,14 @@ import { Link } from "react-router-dom";
 import { Section } from "../../ui/Section";
 import { Container } from "../../ui/Container";
 // import { TypographyH2, TypographyP } from "@/components/ui/typography";
-import { FiHome, FiTool, FiUsers, FiDollarSign, FiShield, FiArrowRight } from "react-icons/fi";
+import {
+  FiHome,
+  FiTool,
+  FiUsers,
+  FiDollarSign,
+  FiShield,
+  FiArrowRight,
+} from "react-icons/fi";
 import { useGsapScrollTrigger } from "@/src/hooks/use-gsap-scroll-trigger";
 import { TypographyH2, TypographyP } from "../../ui/Typography";
 import {
@@ -56,18 +63,6 @@ const services = [
       "Feasibility Studies",
       "Budget Planning",
       "Regulatory Guidance",
-    ],
-  },
-  {
-    icon: FiTool,
-    title: "Sustainable Solutions",
-    description:
-      "Eco-friendly building solutions that reduce environmental impact while maintaining affordability.",
-    features: [
-      "Green Materials",
-      "Energy Efficiency",
-      "Water Conservation",
-      "Waste Reduction",
     ],
   },
 ];
@@ -123,7 +118,7 @@ export function Services() {
               </CardContent>
             </Card>
           ))}
-          
+
           {/* New Service Request Cards */}
           <Card className="group hover:shadow-xl transition-all duration-500 hover:-translate-y-2">
             <CardHeader>
@@ -160,7 +155,8 @@ export function Services() {
                 </CardTitle>
               </div>
               <CardDescription className="text-base leading-relaxed">
-                Expert consultation for sustainability, cost optimization, and project management.
+                Expert consultation for sustainability, cost optimization, and
+                project management.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -184,7 +180,8 @@ export function Services() {
                 </CardTitle>
               </div>
               <CardDescription className="text-base leading-relaxed">
-                Professional legal guidance for property, contracts, and permits.
+                Professional legal guidance for property, contracts, and
+                permits.
               </CardDescription>
             </CardHeader>
             <CardContent>

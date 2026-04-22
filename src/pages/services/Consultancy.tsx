@@ -1,12 +1,17 @@
 import { Link } from "react-router-dom";
 import { Section } from "@/src/components/ui/Section";
 import { Container } from "@/src/components/ui/Container";
-import { TypographyH1, TypographyH2, TypographyP } from "@/src/components/ui/Typography";
+import {
+  TypographyH1,
+  TypographyH2,
+  TypographyP,
+} from "@/src/components/ui/Typography";
 import { Card, CardContent } from "@/src/components/ui/Card";
 import { Button } from "@/src/components/ui/Button";
 import { ConsultancyForm } from "@/src/components/forms/ConsultancyForm";
 import { FiCheck, FiUsers, FiArrowRight } from "react-icons/fi";
 import { useGSAPFadeIn } from "@/src/hooks/use-gsap-fade-in";
+import consultHeroImage from "@/src/assets/hero_images/consult.png";
 
 const consultancyTypes = [
   {
@@ -41,8 +46,16 @@ export default function ConsultancyPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <Section className="bg-gradient-to-b from-background to-muted/30" padding="xl">
-        <Container>
+      <Section className="relative overflow-hidden" padding="xl">
+        <div className="absolute inset-0">
+          <img
+            src={consultHeroImage}
+            alt="Consultancy services workspace"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-background/30" />
+        </div>
+        <Container className="relative z-10">
           <div className="max-w-4xl mx-auto text-center" ref={heroRef}>
             <div className="flex justify-center mb-6">
               <div className="p-4 bg-accent/10 rounded-full">
@@ -50,16 +63,17 @@ export default function ConsultancyPage() {
               </div>
             </div>
             <TypographyH1 className="mb-6">Consultancy Services</TypographyH1>
-            <TypographyP className="text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-              Expert consultation services to guide your project from initial planning through completion. 
-              Get professional advice tailored to your specific needs.
+            <TypographyP className="text-xl font-semibold text-secondary leading-relaxed max-w-2xl mx-auto">
+              Expert consultation services to guide your project from initial
+              planning through completion. Get professional advice tailored to
+              your specific needs.
             </TypographyP>
           </div>
         </Container>
       </Section>
 
       {/* Consultancy Types */}
-      <Section>
+      {/* <Section>
         <Container>
           <TypographyH2 className="text-center mb-8">Our Consultancy Offerings</TypographyH2>
           <div
@@ -76,7 +90,7 @@ export default function ConsultancyPage() {
             ))}
           </div>
         </Container>
-      </Section>
+      </Section> */}
 
       {/* Main Content */}
       <Section>
@@ -93,7 +107,9 @@ export default function ConsultancyPage() {
                         {index + 1}
                       </div>
                       <div className="flex-1">
-                        <TypographyP className="text-muted-foreground">{step}</TypographyP>
+                        <TypographyP className="text-muted-foreground">
+                          {step}
+                        </TypographyP>
                       </div>
                     </div>
                   ))}
@@ -101,7 +117,9 @@ export default function ConsultancyPage() {
               </div>
 
               <Card className="p-6 bg-muted/30">
-                <TypographyH2 className="mb-4 text-lg">What You'll Get</TypographyH2>
+                <TypographyH2 className="mb-4 text-lg">
+                  What You'll Get
+                </TypographyH2>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
                     <FiCheck className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
@@ -134,9 +152,12 @@ export default function ConsultancyPage() {
             {/* Right Column - Form */}
             <div className="lg:sticky lg:top-24">
               <Card className="p-6">
-                <TypographyH2 className="mb-2">Request Consultation</TypographyH2>
+                <TypographyH2 className="mb-2">
+                  Request Consultation
+                </TypographyH2>
                 <TypographyP className="text-sm text-muted-foreground mb-6">
-                  Fill out the form below and our team will contact you to schedule your consultation.
+                  Fill out the form below and our team will contact you to
+                  schedule your consultation.
                 </TypographyP>
                 <ConsultancyForm />
               </Card>
@@ -147,4 +168,3 @@ export default function ConsultancyPage() {
     </div>
   );
 }
-

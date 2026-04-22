@@ -1,38 +1,47 @@
 import { Link } from "react-router-dom";
 import { Section } from "@/src/components/ui/Section";
 import { Container } from "@/src/components/ui/Container";
-import { TypographyH1, TypographyH2, TypographyP } from "@/src/components/ui/Typography";
+import {
+  TypographyH1,
+  TypographyH2,
+  TypographyP,
+} from "@/src/components/ui/Typography";
 import { Card } from "@/src/components/ui/Card";
 import { Button } from "@/src/components/ui/Button";
 import { LegalForm } from "@/src/components/forms/LegalForm";
 import { FiCheck, FiShield } from "react-icons/fi";
 import { useGSAPFadeIn } from "@/src/hooks/use-gsap-fade-in";
+import legalHeroImage from "@/src/assets/hero_images/legal.png";
 
 const legalServices = [
   {
     title: "Property Title & Ownership",
-    description: "Verify property titles, resolve ownership disputes, and ensure clear title transfers.",
+    description:
+      "Verify property titles, resolve ownership disputes, and ensure clear title transfers.",
   },
   {
     title: "Contracts & Agreements",
-    description: "Review and draft construction contracts, service agreements, and vendor contracts.",
+    description:
+      "Review and draft construction contracts, service agreements, and vendor contracts.",
   },
   {
     title: "Building Permits & Compliance",
-    description: "Navigate permit applications, zoning regulations, and building code compliance.",
+    description:
+      "Navigate permit applications, zoning regulations, and building code compliance.",
   },
   {
     title: "Dispute Resolution",
-    description: "Mediation and legal support for construction disputes and conflicts.",
+    description:
+      "Mediation and legal support for construction disputes and conflicts.",
   },
 ];
 
-const trustIndicators = [
-  "Experienced legal professionals",
-  "Confidential consultations",
-  "Construction industry expertise",
-  "Local regulatory knowledge",
-];
+// const trustIndicators = [
+//   "Experienced legal professionals",
+//   "Confidential consultations",
+//   "Construction industry expertise",
+//   "Local regulatory knowledge",
+// ];
 
 export default function LegalAdvisoryPage() {
   const heroRef = useGSAPFadeIn({ y: 20, duration: 0.6 });
@@ -41,25 +50,36 @@ export default function LegalAdvisoryPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <Section className="bg-gradient-to-b from-background to-muted/30" padding="xl">
-        <Container>
+      <Section className="relative overflow-hidden" padding="xl">
+        <div className="absolute inset-0">
+          <img
+            src={legalHeroImage}
+            alt="Legal advisory workspace"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-background/30" />
+        </div>
+        <Container className="relative z-10">
           <div className="max-w-4xl mx-auto text-center" ref={heroRef}>
             <div className="flex justify-center mb-6">
               <div className="p-4 bg-accent/10 rounded-full">
                 <FiShield className="w-12 h-12 text-accent" />
               </div>
             </div>
-            <TypographyH1 className="mb-6">Legal Advisory Services</TypographyH1>
-            <TypographyP className="text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-              Professional legal guidance for all your construction and property-related legal matters. 
-              Get expert advice from experienced legal professionals.
+            <TypographyH1 className="mb-3">
+              Legal Advisory Services
+            </TypographyH1>
+            <TypographyP className="text-xl font-semibold text-secondary leading-relaxed max-w-2xl mx-auto">
+              Professional legal guidance for all your construction and
+              property-related legal matters. Get expert advice from experienced
+              legal professionals.
             </TypographyP>
           </div>
         </Container>
       </Section>
 
       {/* Trust Indicators */}
-      <Section className="bg-muted/30">
+      {/* <Section className="bg-muted/30">
         <Container>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {trustIndicators.map((indicator, index) => (
@@ -67,23 +87,30 @@ export default function LegalAdvisoryPage() {
                 <div className="flex justify-center mb-3">
                   <FiShield className="w-8 h-8 text-accent" />
                 </div>
-                <TypographyP className="text-sm font-medium">{indicator}</TypographyP>
+                <TypographyP className="text-sm font-medium">
+                  {indicator}
+                </TypographyP>
               </div>
             ))}
           </div>
         </Container>
-      </Section>
+      </Section> */}
 
       {/* Legal Services */}
       <Section>
         <Container>
-          <TypographyH2 className="text-center mb-8">Our Legal Services</TypographyH2>
+          <TypographyH2 className="text-center mb-8">
+            Our Legal Services
+          </TypographyH2>
           <div
             ref={servicesRef}
-            className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12"
+            className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"
           >
             {legalServices.map((service, index) => (
-              <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
+              <Card
+                key={index}
+                className="p-6 hover:shadow-lg gap-2 transition-shadow"
+              >
                 <h3 className="font-semibold text-lg mb-2">{service.title}</h3>
                 <TypographyP className="text-muted-foreground text-sm">
                   {service.description}
@@ -101,7 +128,9 @@ export default function LegalAdvisoryPage() {
             {/* Left Column - Information */}
             <div className="space-y-8">
               <div>
-                <TypographyH2 className="mb-4">Why Choose Our Legal Services?</TypographyH2>
+                <TypographyH2 className="mb-4">
+                  Why Choose Our Legal Services?
+                </TypographyH2>
                 <ul className="space-y-3">
                   {[
                     "Expert knowledge of construction and property law",
@@ -111,18 +140,23 @@ export default function LegalAdvisoryPage() {
                   ].map((benefit, index) => (
                     <li key={index} className="flex items-start gap-3">
                       <FiCheck className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
-                      <TypographyP className="text-muted-foreground">{benefit}</TypographyP>
+                      <TypographyP className="text-muted-foreground">
+                        {benefit}
+                      </TypographyP>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <Card className="p-6 bg-muted/30">
-                <TypographyH2 className="mb-4 text-lg">What to Expect</TypographyH2>
+              <Card className="p-6 gap-2 bg-muted/30">
+                <TypographyH2 className="mb-4 text-lg">
+                  What to Expect
+                </TypographyH2>
                 <div className="space-y-3">
                   <TypographyP className="text-muted-foreground text-sm">
-                    After submitting your request, a legal expert will review your case and contact you 
-                    within 24 hours to schedule a consultation. During the consultation, you'll receive 
+                    After submitting your request, a legal expert will review
+                    your case and contact you within 24 hours to schedule a
+                    consultation. During the consultation, you'll receive
                     professional guidance tailored to your specific legal needs.
                   </TypographyP>
                 </div>
@@ -132,9 +166,12 @@ export default function LegalAdvisoryPage() {
             {/* Right Column - Form */}
             <div className="lg:sticky lg:top-24">
               <Card className="p-6">
-                <TypographyH2 className="mb-2">Request Legal Consultation</TypographyH2>
+                <TypographyH2 className="mb-2">
+                  Request Legal Consultation
+                </TypographyH2>
                 <TypographyP className="text-sm text-muted-foreground mb-6">
-                  Fill out the form below and a legal expert will contact you within 24 hours.
+                  Fill out the form below and a legal expert will contact you
+                  within 24 hours.
                 </TypographyP>
                 <LegalForm />
               </Card>
@@ -145,4 +182,3 @@ export default function LegalAdvisoryPage() {
     </div>
   );
 }
-

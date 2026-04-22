@@ -42,12 +42,31 @@ export function Contact() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log("Form submitted:", formData);
+    const contactEmail = import.meta.env.VITE_CONTACT_EMAIL;
+    if (!contactEmail) {
+      return;
+    }
+
+    const subject = encodeURIComponent(
+      `New Project Enquiry${formData.projectType ? ` - ${formData.projectType}` : ""}`,
+    );
+    const body = encodeURIComponent(
+      [
+        `Full Name: ${formData.name}`,
+        `Email: ${formData.email}`,
+        `Phone: ${formData.phone || "N/A"}`,
+        `Project Type: ${formData.projectType || "N/A"}`,
+        "",
+        "Message:",
+        formData.message,
+      ].join("\n"),
+    );
+
+    window.location.href = `mailto:${contactEmail}?subject=${subject}&body=${body}`;
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -59,20 +78,20 @@ export function Contact() {
     {
       icon: FiMail,
       title: "Email Us",
-      details: "info@saas-sl.com",
+      details: import.meta.env.VITE_CONTACT_EMAIL,
       description: "Send us an email anytime",
     },
     {
       icon: FiPhone,
       title: "Call Us",
-      details: "+232 XX XXX XXXX",
+      details: import.meta.env.VITE_CONTACT_PHONE,
       description: "Mon-Fri from 8am to 5pm",
     },
     {
       icon: FiMapPin,
       title: "Visit Us",
-      details: "Freetown, Sierra Leone",
-      description: "Come say hello at our office",
+      details: "20 Pike Street, Brookfields",
+      description: "Freetown, Sierra Leone",
     },
     {
       icon: FiClock,
@@ -97,7 +116,10 @@ export function Contact() {
           {/* Contact Form */}
           <Card>
             <CardHeader>
-              <CardTitle>Send us a message</CardTitle>
+              <CardTitle>
+                {" "}
+                <span className="font-bold text-2xl">Send us an Email</span>
+              </CardTitle>
               <CardDescription>
                 Fill out the form below and we'll get back to you within 24
                 hours.
@@ -169,7 +191,7 @@ export function Contact() {
 
                 <Button type="submit" className="w-full">
                   <FiSend className="mr-2 w-4 h-4" />
-                  Send Message
+                  Send Email
                 </Button>
               </form>
             </CardContent>
@@ -197,7 +219,7 @@ export function Contact() {
             ))}
 
             {/* Map Placeholder */}
-            <Card className="p-0 overflow-hidden">
+            {/* <Card className="p-0 overflow-hidden">
               <div className="h-64 bg-muted flex items-center justify-center">
                 <div className="text-center">
                   <FiMapPin className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
@@ -207,7 +229,7 @@ export function Contact() {
                   </p>
                 </div>
               </div>
-            </Card>
+            </Card> */}
           </div>
         </div>
       </Container>
