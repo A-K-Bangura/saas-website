@@ -5,7 +5,7 @@ import { FiMenu, FiX, FiChevronDown, FiUser } from "react-icons/fi";
 import { isAuthenticated, getUser } from "@/src/lib/auth";
 
 // import SaasLogo1 from "../../assets/logos/SAASLogo1.png";
-import SaasLogo2 from "../../assets/logos/SAASLogoinvert.png";
+import SaasLogo2 from "../../assets/logos/SAASlogoinvert.png";
 
 export function Header() {
   const navigate = useNavigate();
