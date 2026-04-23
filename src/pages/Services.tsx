@@ -273,7 +273,7 @@ export default function ServicesPage() {
                 className="overflow-hidden scroll-mt-24"
               >
                 <div className="grid grid-cols-1 lg:grid-cols-2">
-                  <CardHeader className="p-8">
+                  <CardHeader className="p-4 lg:p-8">
                     <div className="flex items-center space-x-4 mb-4">
                       <div className="p-3 bg-accent/10 rounded-lg">
                         <service.icon className="w-8 h-8 text-accent" />
@@ -317,7 +317,7 @@ export default function ServicesPage() {
                     </Button>
                   </CardHeader>
 
-                  <CardContent className="p-8 bg-muted/30">
+                  <CardContent className="p-4 lg:p-8 bg-muted/30">
                     <TypographyH3 className="mb-4">Our Process:</TypographyH3>
                     <div className="space-y-3">
                       {service.process.map((step, stepIndex) => (
