@@ -26,7 +26,10 @@ import leftArrow from "./assets/cursor_icons/left-arrow.png"; */
   --muted-foreground: #7e7a7a;
 
   /* SAAS accent green (10%) for CTAs and highlights */
-  --accent: #16a34a;
+  /* --accent: #16a34a; */
+  /* --accent: #a39a16; */
+  /* --accent: #d3cd75; */
+  --accent: #cead49;
   --accent-foreground: #ffffff;
 
   --destructive: oklch(0.577 0.245 27.325);

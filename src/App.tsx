@@ -52,11 +52,13 @@ const PageLoader = () => (
 );
 
 function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
 
   React.useEffect(() => {
+    // Keep in-page hash navigation intact (e.g. /services#construction-services)
+    if (hash) return;
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  }, [pathname]);
+  }, [pathname, hash]);
 
   return null;
 }
@@ -213,7 +215,7 @@ export default function App() {
       {(() => {
         // Track the current pathname in state and update on route change
         const [currentPath, setCurrentPath] = React.useState(
-          window.location.pathname
+          window.location.pathname,
         );
 
         React.useEffect(() => {

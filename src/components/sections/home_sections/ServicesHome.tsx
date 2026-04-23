@@ -30,10 +30,11 @@ import { Button } from "../../ui/Button";
 
 const services = [
   {
+    targetId: "architectural-design",
     icon: FiHome,
-    title: "Architectural Design",
+    title: "Architectural and Structural Design",
     description:
-      "Complete architectural design services from concept to construction documents with sustainability at the core.",
+      "Complete architectural and structural design services from concept to construction documents with sustainability at the core.",
     features: [
       "Residential Design",
       "Commercial Planning",
@@ -42,6 +43,7 @@ const services = [
     ],
   },
   {
+    targetId: "construction-services",
     icon: FiTool,
     title: "Construction Services",
     description:
@@ -54,6 +56,7 @@ const services = [
     ],
   },
   {
+    targetId: "project-consultation",
     icon: FiUsers,
     title: "Project Consultation",
     description:
@@ -86,37 +89,40 @@ export function Services() {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 gsap-scroll-trigger"
         >
           {services.map((service, index) => (
-            <Card
+            <Link
               key={index}
-              className="group hover:shadow-xl transition-all duration-500 hover:-translate-y-2"
+              to={`/services#${service.targetId}`}
+              className="block h-full"
             >
-              <CardHeader>
-                <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-accent/25">
-                    <service.icon className="w-6 h-6 text-accent transition-transform duration-300 group-hover:scale-110" />
+              <Card className="group h-full hover:shadow-xl transition-all duration-500 hover:-translate-y-2 cursor-pointer">
+                <CardHeader>
+                  <div className="flex items-center space-x-4">
+                    <div className="p-3 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-accent/25">
+                      <service.icon className="w-6 h-6 text-accent transition-transform duration-300 group-hover:scale-110" />
+                    </div>
+                    <CardTitle className="text-xl group-hover:text-accent transition-colors duration-300">
+                      {service.title}
+                    </CardTitle>
                   </div>
-                  <CardTitle className="text-xl group-hover:text-accent transition-colors duration-300">
-                    {service.title}
-                  </CardTitle>
-                </div>
-                <CardDescription className="text-base leading-relaxed">
-                  {service.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 mb-4">
-                  {service.features.map((feature, featureIndex) => (
-                    <li
-                      key={featureIndex}
-                      className="flex items-center space-x-2 text-sm text-muted-foreground"
-                    >
-                      <div className="w-1.5 h-1.5 bg-accent rounded-full transition-all duration-300 group-hover:shadow-sm group-hover:shadow-accent" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
+                  <CardDescription className="text-base leading-relaxed">
+                    {service.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 mb-4">
+                    {service.features.map((feature, featureIndex) => (
+                      <li
+                        key={featureIndex}
+                        className="flex items-center space-x-2 text-sm text-muted-foreground"
+                      >
+                        <div className="w-1.5 h-1.5 bg-accent rounded-full transition-all duration-300 group-hover:shadow-sm group-hover:shadow-accent" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
 
           {/* New Service Request Cards */}

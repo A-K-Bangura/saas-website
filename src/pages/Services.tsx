@@ -16,7 +16,7 @@
 // import { Button } from "@/components/ui/button";
 // import { Badge } from "@/components/ui/badge";
 // import { CTASection } from "@/components/ui/cta-section";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   FiHome,
   FiTool,
@@ -60,10 +60,11 @@ import servicesHeroImage from "../assets/hero_images/services1.png";
 
 const services = [
   {
+    slug: "architectural-design",
     icon: FiHome,
-    title: "Architectural Design",
+    title: "Architectural and Structural Design",
     description:
-      "Complete architectural design services from initial concept to detailed construction documents.",
+      "Complete architectural and structural design services from initial concept to detailed construction documents.",
     features: [
       "Residential Design",
       "Commercial Planning",
@@ -83,6 +84,7 @@ const services = [
     pricing: "Starting from $2,000",
   },
   {
+    slug: "construction-services",
     icon: FiTool,
     title: "Construction Services",
     description:
@@ -106,6 +108,7 @@ const services = [
     pricing: "10-15% of construction cost",
   },
   {
+    slug: "project-consultation",
     icon: FiUsers,
     title: "Project Consultation",
     description:
@@ -226,6 +229,16 @@ export default function ServicesPage() {
     setIsModalOpen(false);
   };
 
+  useEffect(() => {
+    if (!window.location.hash) return;
+
+    const targetId = window.location.hash.replace("#", "");
+    const target = document.getElementById(targetId);
+    if (!target) return;
+
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
   return (
     <div>
       {/* Hero Section */}
@@ -254,7 +267,11 @@ export default function ServicesPage() {
         <Container>
           <div className="space-y-16">
             {services.map((service, index) => (
-              <Card key={index} className="overflow-hidden">
+              <Card
+                key={index}
+                id={service.slug}
+                className="overflow-hidden scroll-mt-24"
+              >
                 <div className="grid grid-cols-1 lg:grid-cols-2">
                   <CardHeader className="p-8">
                     <div className="flex items-center space-x-4 mb-4">

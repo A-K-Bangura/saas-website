@@ -5,12 +5,22 @@ import { useLocation } from "react-router-dom";
 const MAJOR_EXACT_PATHS = ["/", "/about"];
 const MAJOR_PREFIX_PATHS = ["/projects", "/profiles", "/store", "/services"];
 
+function normalizePath(pathname: string) {
+  if (!pathname) return "/";
+  const trimmed = pathname.replace(/\/+$/, "");
+  return trimmed || "/";
+}
+
 function isVisibleOnMajorPages(pathname: string) {
-  if (MAJOR_EXACT_PATHS.includes(pathname)) {
+  const normalizedPath = normalizePath(pathname);
+
+  if (MAJOR_EXACT_PATHS.includes(normalizedPath)) {
     return true;
   }
 
-  return MAJOR_PREFIX_PATHS.some((prefix) => pathname.startsWith(prefix));
+  return MAJOR_PREFIX_PATHS.some((prefix) =>
+    normalizedPath.startsWith(prefix),
+  );
 }
 
 function normalizePhoneNumber(rawPhone: string) {
