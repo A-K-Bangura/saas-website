@@ -98,7 +98,7 @@ export function Header() {
           : "bg-transparent"
       }`}
     >
-      <div className="container mx-auto px-6 max-w-7xl">
+      <div className="container mx-auto px-6 max-w-7xl" ref={dropdownRef}>
         <div className="flex items-center justify-between h-8">
           {/* Logo */}
           <NavLink to="/" className="flex items-center space-x-2 group">
@@ -108,10 +108,7 @@ export function Header() {
           </NavLink>
 
           {/* Desktop Navigation */}
-          <nav
-            className="hidden md:flex items-center space-x-8"
-            ref={dropdownRef}
-          >
+          <nav className="hidden md:flex items-center space-x-8">
             {navigation.map((item) => (
               <div key={item.name} className="relative">
                 {item.dropdown ? (
