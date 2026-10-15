@@ -1,21 +1,15 @@
-// import {
-//   Card,
-//   CardContent,
-//   CardDescription,
-//   CardHeader,
-//   CardTitle,
-// } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Section } from "../../ui/Section";
 import { Container } from "../../ui/Container";
-// import { TypographyH2, TypographyP } from "@/components/ui/typography";
 import {
-  FiHome,
-  FiTool,
   FiUsers,
-  FiDollarSign,
-  FiShield,
+  FiPackage,
+  FiBookOpen,
+  FiFileText,
   FiArrowRight,
+  FiDollarSign,
+  FiMessageSquare,
+  FiShield,
 } from "react-icons/fi";
 import { useGsapScrollTrigger } from "@/src/hooks/use-gsap-scroll-trigger";
 import { TypographyH2, TypographyP } from "../../ui/Typography";
@@ -28,177 +22,139 @@ import {
 } from "../../ui/Card";
 import { Button } from "../../ui/Button";
 
-const services = [
+const pillars = [
   {
-    targetId: "architectural-design",
-    icon: FiHome,
-    title: "Architectural and Structural Design",
-    description:
-      "Complete architectural and structural design services from concept to construction documents with sustainability at the core.",
-    features: [
-      "Residential Design",
-      "Commercial Planning",
-      "3D Visualization",
-      "Building Permits",
-    ],
-  },
-  {
-    targetId: "construction-services",
-    icon: FiTool,
-    title: "Construction Services",
-    description:
-      "Full-service construction management ensuring quality, timeline adherence, and cost-effectiveness.",
-    features: [
-      "Project Management",
-      "Quality Control",
-      "Timeline Management",
-      "Cost Optimization",
-    ],
-  },
-  {
-    targetId: "project-consultation",
+    href: "/about#professionals",
     icon: FiUsers,
-    title: "Project Consultation",
+    title: "Right Professionals",
     description:
-      "Expert consultation services to guide your project from initial planning through completion.",
-    features: [
-      "Site Analysis",
-      "Feasibility Studies",
-      "Budget Planning",
-      "Regulatory Guidance",
-    ],
+      "Curated teams selected and held accountable for every contract.",
+  },
+  {
+    href: "/about#materials",
+    icon: FiPackage,
+    title: "Quality Materials",
+    description: "Inspected high-quality materials at competitive rates.",
+  },
+  {
+    href: "/about#training",
+    icon: FiBookOpen,
+    title: "Trained Workforce",
+    description:
+      "Continuous training to global construction practices and safety.",
+  },
+  {
+    href: "/about#documentation",
+    icon: FiFileText,
+    title: "Full Documentation",
+    description:
+      "Land to permit — clearer decisions and direction from idea to construction.",
+  },
+];
+
+const serviceActions = [
+  {
+    href: "/services/estimation",
+    icon: FiDollarSign,
+    title: "Free Estimation",
+    description: "Get a detailed cost estimate for your construction project.",
+    cta: "Request Estimate",
+  },
+  {
+    href: "/services/consultancy",
+    icon: FiMessageSquare,
+    title: "Consultancy",
+    description:
+      "Expert consultation for project planning, costs, and delivery.",
+    cta: "Request Consultation",
+  },
+  {
+    href: "/services/legal-advisory",
+    icon: FiShield,
+    title: "Legal Advisory",
+    description:
+      "Professional legal guidance for property, contracts, and permits.",
+    cta: "Book Consultation",
   },
 ];
 
 export function Services() {
-  const servicesRef = useGsapScrollTrigger({ y: 40, stagger: 0.2 });
+  const pillarsRef = useGsapScrollTrigger({ y: 40, stagger: 0.15 });
+  const actionsRef = useGsapScrollTrigger({ y: 40, stagger: 0.15 });
 
   return (
     <Section className="bg-muted/30">
       <Container>
-        <div className="text-center mb-16">
-          <TypographyH2 className="mb-4">Our Services</TypographyH2>
+        <div className="text-center mb-8 md:mb-10">
+          <TypographyH2 className="mb-4">The Solution, One Integrated Partner - SAAS</TypographyH2>
           <TypographyP className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            One stop solution for all your architectural and construction
-            worries
+            SAAS SL aggregates the best professionals, supplies inspected
+            materials, trains its workforce, and simplifies the journey from
+            land to permit.
           </TypographyP>
         </div>
 
         <div
-          ref={servicesRef}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 gsap-scroll-trigger"
+          ref={pillarsRef}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 gsap-scroll-trigger mb-8"
         >
-          {services.map((service, index) => (
+          {pillars.map((pillar) => (
             <Link
-              key={index}
-              to={`/services#${service.targetId}`}
-              className="block h-full"
+              key={pillar.href}
+              to={pillar.href}
+              className="group block space-y-3"
             >
-              <Card className="group h-full hover:shadow-xl transition-all duration-500 hover:-translate-y-2 cursor-pointer">
-                <CardHeader>
-                  <div className="flex items-center space-x-4">
-                    <div className="p-3 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-accent/25">
-                      <service.icon className="w-6 h-6 text-accent transition-transform duration-300 group-hover:scale-110" />
-                    </div>
-                    <CardTitle className="text-xl group-hover:text-accent transition-colors duration-300">
-                      {service.title}
-                    </CardTitle>
-                  </div>
-                  <CardDescription className="text-base leading-relaxed">
-                    {service.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 mb-4">
-                    {service.features.map((feature, featureIndex) => (
-                      <li
-                        key={featureIndex}
-                        className="flex items-center space-x-2 text-sm text-muted-foreground"
-                      >
-                        <div className="w-1.5 h-1.5 bg-accent rounded-full transition-all duration-300 group-hover:shadow-sm group-hover:shadow-accent" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+              <div className="flex items-center space-x-3">
+                <div className="p-3 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-colors duration-300">
+                  <pillar.icon className="w-6 h-6 text-accent" />
+                </div>
+                <h3 className="text-lg font-semibold group-hover:text-accent transition-colors duration-300">
+                  {pillar.title}
+                </h3>
+              </div>
+              <TypographyP className="text-muted-foreground text-sm leading-relaxed">
+                {pillar.description}
+              </TypographyP>
+              <span className="inline-flex items-center text-sm font-medium text-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                Learn more
+                <FiArrowRight className="ml-1 w-4 h-4" />
+              </span>
             </Link>
           ))}
+        </div>
 
-          {/* New Service Request Cards */}
-          <Card className="group hover:shadow-xl transition-all duration-500 hover:-translate-y-2">
-            <CardHeader>
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-accent/25">
-                  <FiDollarSign className="w-6 h-6 text-accent transition-transform duration-300 group-hover:scale-110" />
+        <div
+          ref={actionsRef}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 gsap-scroll-trigger"
+        >
+          {serviceActions.map((action) => (
+            <Card
+              key={action.href}
+              className="group hover:shadow-xl transition-all duration-500 hover:-translate-y-2"
+            >
+              <CardHeader>
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-all duration-300">
+                    <action.icon className="w-6 h-6 text-accent transition-transform duration-300 group-hover:scale-110" />
+                  </div>
+                  <CardTitle className="text-xl group-hover:text-accent transition-colors duration-300">
+                    {action.title}
+                  </CardTitle>
                 </div>
-                <CardTitle className="text-xl group-hover:text-accent transition-colors duration-300">
-                  Free Estimation
-                </CardTitle>
-              </div>
-              <CardDescription className="text-base leading-relaxed">
-                Get a detailed cost estimate for your construction project.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/services/estimation">
-                <Button className="w-full group-hover:scale-105 transition-transform duration-300">
-                  Request Estimate
-                  <FiArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="group hover:shadow-xl transition-all duration-500 hover:-translate-y-2">
-            <CardHeader>
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-accent/25">
-                  <FiUsers className="w-6 h-6 text-accent transition-transform duration-300 group-hover:scale-110" />
-                </div>
-                <CardTitle className="text-xl group-hover:text-accent transition-colors duration-300">
-                  Consultancy
-                </CardTitle>
-              </div>
-              <CardDescription className="text-base leading-relaxed">
-                Expert consultation for sustainability, cost optimization, and
-                project management.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/services/consultancy">
-                <Button className="w-full group-hover:scale-105 transition-transform duration-300">
-                  Request Consultation
-                  <FiArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="group hover:shadow-xl transition-all duration-500 hover:-translate-y-2">
-            <CardHeader>
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-accent/25">
-                  <FiShield className="w-6 h-6 text-accent transition-transform duration-300 group-hover:scale-110" />
-                </div>
-                <CardTitle className="text-xl group-hover:text-accent transition-colors duration-300">
-                  Legal Advisory
-                </CardTitle>
-              </div>
-              <CardDescription className="text-base leading-relaxed">
-                Professional legal guidance for property, contracts, and
-                permits.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/services/legal-advisory">
-                <Button className="w-full group-hover:scale-105 transition-transform duration-300">
-                  Book Consultation
-                  <FiArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+                <CardDescription className="text-base leading-relaxed">
+                  {action.description}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link to={action.href}>
+                  <Button className="w-full group-hover:scale-105 transition-transform duration-300">
+                    {action.cta}
+                    <FiArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </Container>
     </Section>

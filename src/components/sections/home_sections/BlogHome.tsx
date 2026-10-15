@@ -94,7 +94,7 @@ export function BlogPreview() {
   const totalPages = Math.max(1, Math.ceil(totalSlides / cardsPerView));
 
   return (
-    <section ref={sectionRef} className="py-16 bg-gray-50">
+    <section ref={sectionRef} className="py-12 bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <TypographyH2 className="mb-4">

@@ -121,7 +121,7 @@ export function Portfolio() {
     <Section className="relative overflow-hidden min-h-[72vh] md:min-h-[78vh]">
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-background/68 backdrop-blur-[1.5px]" />
-        <div className="grid h-full grid-cols-12 grid-rows-12 md:grid-rows-8 grid-flow-dense gap-1 md:gap-1.5 p-1.5 md:p-2 opacity-50">
+        <div className="grid mt-4 h-full grid-cols-12 grid-rows-12 md:grid-rows-8 grid-flow-dense gap-1 md:gap-1.5 p-1.5 md:p-2 opacity-50">
           {tileLayout.map((layoutClassName, index) => (
             <div
               key={`${layoutClassName}-${index}`}
@@ -150,13 +150,11 @@ export function Portfolio() {
 
       <Container className="relative z-10">
         <div className="text-center py-8 md:py-14">
-          <TypographyH2 className="mb-4">Our Portfolios</TypographyH2>
+          <TypographyH2 className="mb-4">Our Portfolio</TypographyH2>
           <TypographyP className="text-lg text-black max-w-2xl mx-auto mb-4">
-            {/* Explore our completed projects showcasing sustainable and innovative
-            architectural solutions across Sierra Leone. */}
             <span className="font-semibold">
-              Work from top Architectures and Constructors nationwide available
-              at your disposal.
+              Completed residential, commercial and community projects across
+              Sierra Leone — proof of trained teams and trusted delivery.
             </span>
           </TypographyP>
 

@@ -18,15 +18,16 @@ import { useNavigate } from "react-router-dom";
 import hero1 from "../../../assets/hero_images/Hero1.jpg";
 import heroMobile1 from "../../../assets/hero_images/HeroMobile1.jpg";
 import hero2 from "../../../assets/hero_images/Hero2.png";
-import estimate from "../../../assets/hero_images/estimate.png";
+import legal from "../../../assets/hero_images/legal.png";
 import store from "../../../assets/hero_images/store.png";
 import projects from "../../../assets/hero_images/project.png";
+import saasLogoBlack from "../../../assets/logos/SAAS_SL_logo_black.png";
 
 const slides = [
   {
     id: 1,
-    title: "Sustainable & Affordable Architectural Solutions",
-    subtitle: "Expert Professionals You Can Trust",
+    title: "SAAS SL",
+    subtitle: "The Right Professionals for Your Contract",
     description:
       "Skip the stress of site mismanagement, endless excuses and late delivery. We provide certified, reliable professionals dedicated to precision, safety, and bringing your blueprint to life on time.",
     ctaText: "View Professionals",
@@ -36,21 +37,21 @@ const slides = [
   },
   {
     id: 2,
-    title: "Sustainable & Affordable Architectural Solutions",
-    subtitle: "Know Your Costs Upfront",
+    title: "SAAS SL",
+    subtitle: "From Land to Permit, Simplified",
     description:
-      "Planning your dream build? Get a transparent, comprehensive cost breakdown tailored to your project requirements so you can build with confidence within your budget.",
-    ctaText: "Get a Free Estimate",
-    ctaAction: "estimates",
-    backgroundImage: estimate,
-    backgroundImageMobile: estimate,
+      "We make the documentation and decision journey clearer and faster, from economic fit and land, through design, conveyance and building permit readiness.",
+    ctaText: "Legal Advisory",
+    ctaAction: "legal",
+    backgroundImage: legal,
+    backgroundImageMobile: legal,
   },
   {
     id: 3,
-    title: "Sustainable & Affordable Architectural Solutions",
-    subtitle: "Quality Materials, Delivered",
+    title: "SAAS SL",
+    subtitle: "Inspected Materials. Competitive Prices.",
     description:
-      "From eco-friendly blocks to premium finishing, browse our curated store for high-grade construction materials that stand the test of time.",
+      "Access high-quality building materials that have been reviewed against performance standards, without sacrificing strength or durability through the SAAS SL Marketplace.",
     ctaText: "Shop Materials",
     ctaAction: "store",
     backgroundImage: store,
@@ -58,10 +59,10 @@ const slides = [
   },
   {
     id: 4,
-    title: "Sustainable & Affordable Architectural Solutions",
-    subtitle: "Our Portfolio of Excellence",
+    title: "SAAS SL",
+    subtitle: "Build With Confidence",
     description:
-      "Browse our portfolio of completed residential, commercial, and community projects across Sierra Leone — proof that quality construction and affordability can go hand in hand.",
+      "One partner. Trained teams. Trusted materials. Browse completed residential, commercial and community projects across Sierra Leone.",
     ctaText: "View Projects",
     ctaAction: "projects",
     backgroundImage: projects,
@@ -134,7 +135,7 @@ export function Hero() {
 
       const ctaRouteMap: Record<string, string> = {
         professionals: "/profiles",
-        estimates: "/services/estimation",
+        legal: "/services/legal-advisory",
         store: "/store",
         projects: "/projects",
       };
@@ -200,10 +201,14 @@ export function Hero() {
             style={{ textAlign: "left" }}
           >
             <div ref={titleRef}>
-              <h1 className="text-sm md:text-xl lg:text-xl mt-10 font-bold tracking-tight">
-                {currentSlideData.title}
+              <h1 className="mt-10 mb-2">
+                <img
+                  src={saasLogoBlack}
+                  alt="SAAS SL"
+                  className="h-6 md:h-6 lg:h-8 w-auto object-contain"
+                />
               </h1>
-              <p className="text-4xl md:text-7xl lg:text-[5rem] font-bold tracking-tight mb-2">
+              <p className="text-xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-3">
                 {currentSlideData.subtitle}
               </p>
             </div>
